@@ -129,6 +129,7 @@ AI、Workflow、前端人工操作最终应复用相同的 ERP Business Operatio
 | [采购生命周期](./05-procurement-lifecycle.md) | v0.2 | 采购任务、拆单采购、多来源、采购限价、实际成本、外部采购结算和采购/物流边界 |
 | [物流生命周期](./06-logistics-lifecycle.md) | v0.2 | Source Shipment、Platform Shipment、Tracking、可观察范围、Delivered、Delay/Lost 与物流/采购解耦 |
 | [售后生命周期](./07-after-sales-lifecycle.md) | v0.3 | 平台售后数据、Return/Refund、待处理售后、采购侧独立处置、估算财务影响与对账边界 |
+| [对账与利润生命周期](./08-reconciliation-profit-lifecycle.md) | v0.1 | Order Line 级预计利润、实际采购成本、跨账期 Settlement、Current Reconciled Profit 与 Store Payout |
 
 ---
 
@@ -172,19 +173,12 @@ AI、Workflow、前端人工操作最终应复用相同的 ERP Business Operatio
 
 ## 6. 下一业务域
 
-订单生命周期主干已经形成基线，目前已经完成：
+订单从同步、审核、采购、物流、售后到对账与利润的主链已经形成阶段 0 基线。
 
-1. Procurement Lifecycle；
-2. Logistics Lifecycle；
-3. After-sales Lifecycle。
+接下来优先梳理：
 
-接下来仍需要独立展开：
+> **Store Lifecycle（店铺生命周期）**
 
-1. Reconciliation & Profit Lifecycle（结算、对账与最终利润）；
-2. Store Lifecycle（店铺接入、授权、停用、异常与退出）。
+店铺是 Listing、Order、Settlement、Payout、权限、平台授权等大量业务对象的归属基础，需要明确店铺如何接入 ERP、如何授权、正常运营、失效、暂停、终止、恢复和退出。
 
-下一步优先梳理：
-
-> **Reconciliation & Profit Lifecycle（对账与利润生命周期）**
-
-因为订单从下单到售后已经形成完整业务链，接下来需要明确 Estimated Profit、Settlement/Recon、实际回款、费用调整和 Final Profit 的关系，才能让订单利润、商品利润和店铺利润使用同一套事实口径。
+后续还需要继续评估是否存在其他必须在阶段 0 单独建模的横向业务域，例如 Team / User / Permission、Platform Account Connection、Warehouse / Fulfillment 等；是否独立成文档，以实际业务必要性为准，而不是为了追求“大而全”。
