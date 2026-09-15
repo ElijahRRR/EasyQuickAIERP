@@ -126,6 +126,7 @@ AI、Workflow、前端人工操作最终应复用相同的 ERP Business Operatio
 | [Listing 生命周期](./02-listing-lifecycle.md) | v0.1 | Listing Draft、Listing 身份、提交状态、平台状态、库存归零、Retire、Delete、重新上架 |
 | [Platform Error Management](./03-platform-error-management.md) | v0.1 | 首次上架失败与 Unpublished、错误分类、根因、团队处理策略、自动修复边界 |
 | [订单生命周期](./04-order-lifecycle.md) | v0.1 | 订单同步、订单审核、采购、物流、Delivered、售后、对账、利润和最终闭环 |
+| [采购生命周期](./05-procurement-lifecycle.md) | v0.2 | 采购任务、拆单采购、多来源、采购限价、实际成本、外部采购结算和采购/物流边界 |
 
 ---
 
@@ -169,15 +170,17 @@ AI、Workflow、前端人工操作最终应复用相同的 ERP Business Operatio
 
 ## 6. 下一业务域
 
-订单生命周期主干已经形成 v0.1 基线，但其中还有几个需要独立展开的核心子流程：
+订单生命周期主干已经形成基线，目前已经完成 Procurement Lifecycle。
 
-1. Procurement Lifecycle（采购与采购请款）；
-2. Logistics Lifecycle（发货与物流追踪）；
-3. After-sales Lifecycle（取消、退款、退货、延迟、丢件等）；
-4. Reconciliation & Profit Lifecycle（结算、对账与最终利润）。
+接下来仍需要独立展开：
+
+1. Logistics Lifecycle（发货与物流追踪）；
+2. After-sales Lifecycle（取消、退款、退货、延迟、丢件等）；
+3. Reconciliation & Profit Lifecycle（结算、对账与最终利润）；
+4. Store Lifecycle（店铺接入、授权、停用、异常与退出）。
 
 下一步优先梳理：
 
-> **Procurement Lifecycle（采购生命周期）**
+> **Logistics Lifecycle（物流生命周期）**
 
-因为采购是订单审核与实际发货之间的关键桥梁，同时直接决定真实成本、履约结果和后续利润。
+原因是物流连接 Purchase、Sales Shipment 与 After-sales，也是当前人工成本最高的环节之一。
