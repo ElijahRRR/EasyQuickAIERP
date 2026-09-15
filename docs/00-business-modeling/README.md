@@ -128,6 +128,7 @@ AI、Workflow、前端人工操作最终应复用相同的 ERP Business Operatio
 | [订单生命周期](./04-order-lifecycle.md) | v0.1 | 订单同步、订单审核、采购、物流、Delivered、售后、对账、利润和最终闭环 |
 | [采购生命周期](./05-procurement-lifecycle.md) | v0.2 | 采购任务、拆单采购、多来源、采购限价、实际成本、外部采购结算和采购/物流边界 |
 | [物流生命周期](./06-logistics-lifecycle.md) | v0.2 | Source Shipment、Platform Shipment、Tracking、可观察范围、Delivered、Delay/Lost 与物流/采购解耦 |
+| [售后生命周期](./07-after-sales-lifecycle.md) | v0.3 | 平台售后数据、Return/Refund、待处理售后、采购侧独立处置、估算财务影响与对账边界 |
 
 ---
 
@@ -174,16 +175,16 @@ AI、Workflow、前端人工操作最终应复用相同的 ERP Business Operatio
 订单生命周期主干已经形成基线，目前已经完成：
 
 1. Procurement Lifecycle；
-2. Logistics Lifecycle。
+2. Logistics Lifecycle；
+3. After-sales Lifecycle。
 
 接下来仍需要独立展开：
 
-1. After-sales Lifecycle（取消、退款、退货、延迟、丢件等）；
-2. Reconciliation & Profit Lifecycle（结算、对账与最终利润）；
-3. Store Lifecycle（店铺接入、授权、停用、异常与退出）。
+1. Reconciliation & Profit Lifecycle（结算、对账与最终利润）；
+2. Store Lifecycle（店铺接入、授权、停用、异常与退出）。
 
 下一步优先梳理：
 
-> **After-sales Lifecycle（售后生命周期）**
+> **Reconciliation & Profit Lifecycle（对账与利润生命周期）**
 
-原因是售后会同时引用订单、采购、物流、退款和客户沟通事实，也是当前团队人工成本最高的环节之一。
+因为订单从下单到售后已经形成完整业务链，接下来需要明确 Estimated Profit、Settlement/Recon、实际回款、费用调整和 Final Profit 的关系，才能让订单利润、商品利润和店铺利润使用同一套事实口径。
