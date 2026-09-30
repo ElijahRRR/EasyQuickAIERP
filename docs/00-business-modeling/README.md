@@ -131,6 +131,7 @@ AI、Workflow、前端人工操作最终应复用相同的 ERP Business Operatio
 | [售后生命周期](./07-after-sales-lifecycle.md) | v0.3 | 平台售后数据、Return/Refund、待处理售后、采购侧独立处置、估算财务影响与对账边界 |
 | [对账与利润生命周期](./08-reconciliation-profit-lifecycle.md) | v0.1 | Order Line 级预计利润、实际采购成本、跨账期 Settlement、Current Reconciled Profit 与 Store Payout |
 | [店铺生命周期](./09-store-lifecycle.md) | v0.2 | Store 平台身份、三类独立状态、连接关系、经营配置、解绑与历史负责人/运营组归属 |
+| [Team / User / Permission / Organization](./10-team-user-permission-organization.md) | v0.2 | Team 隔离、Group、Store Assignment、Platform/Store/Function/Action 权限、Role Template 与 Digital Employee |
 
 ---
 
@@ -174,14 +175,12 @@ AI、Workflow、前端人工操作最终应复用相同的 ERP Business Operatio
 
 ## 6. 下一业务域
 
-订单主链与 Store Lifecycle 已形成阶段 0 基线。
+订单主链、Store Lifecycle 与 Team / User / Permission / Organization Model 已形成阶段 0 基线。
 
 下一步优先梳理：
 
-> **Team / User / Permission / Organization Model**
+> **Warehouse / Fulfillment Model**
 
-这一横向模型需要明确 Team 的租户边界、用户如何加入 Team、运营组如何组织、Store 如何分配负责人，以及不同角色到底能查看和操作哪些业务资源。
+需要明确 Warehouse 在 ERP 中到底代表什么、Store 与 Warehouse 的关系、库存和履约方式如何表达，以及自有仓、平台仓、供应商直发等模式是否需要共用一套基础业务模型。
 
-重点仍然是业务事实与权限边界，不在阶段 0 提前决定具体 RBAC/ABAC 技术实现。
-
-后续再评估 Warehouse / Fulfillment、Platform Connection 等横向能力是否需要独立建模。
+完成这一横向业务域后，再评估阶段 0 是否还有必须单独建模的核心对象，然后决定是否进入阶段 1：ERP 地基。
