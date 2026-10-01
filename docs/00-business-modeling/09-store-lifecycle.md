@@ -1,4 +1,4 @@
-# 店铺生命周期业务模型 v0.2
+# 店铺生命周期业务模型 v0.3
 
 > 状态：已确认  
 > 所属阶段：ERP 阶段 0 — 业务建模
@@ -286,7 +286,7 @@ Store H001
 - Brand Allocation Rule；
 - Estimated Commission；
 - Procurement Cost Coefficient；
-- Warehouse；
+- Platform Resource Configuration（例如 Walmart Platform Warehouse / Shipping Template）；
 - Workflow；
 - Risk Policy。
 
@@ -600,7 +600,7 @@ Store
 │   ├── Category
 │   ├── Fulfillment
 │   ├── Cost Policy
-│   ├── Warehouse
+│   ├── Platform Resources
 │   ├── Workflow
 │   └── Risk Policy
 │
@@ -683,6 +683,7 @@ Historical Data Retained
 21. 历史订单按业务发生时的负责人 / 运营组归属。
 22. 后续 Settlement / Refund 改变金额时，不改变该历史订单原来的责任归属。
 23. Store 当前归属和历史归属都需要可查询。
+24. Walmart Platform Warehouse / Shipping Template 等属于平台资源配置，不代表 ERP 已建立实体 Warehouse / WMS Domain。
 
 ---
 
