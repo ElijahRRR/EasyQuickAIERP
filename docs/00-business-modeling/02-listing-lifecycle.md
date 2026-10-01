@@ -1,4 +1,4 @@
-# Listing 生命周期业务模型 v0.1
+# Listing 生命周期业务模型 v0.2
 
 > 状态：已确认业务基线
 
@@ -18,7 +18,7 @@
 此时可以尚未：
 
 - 确定 Store；
-- 确定 Warehouse；
+- 确定需要的 Platform Resource（如 Walmart Platform Warehouse）；
 - 生成 SKU；
 - 准备 UPC / GTIN；
 - 设置价格库存；
@@ -46,7 +46,7 @@ Listing Draft 用于承载某个 Product 面向某个平台准备的销售资料
 - UPC / GTIN；
 - Price；
 - Inventory；
-- Warehouse；
+- Platform Resource Reference（按平台需要）；
 - 其他平台要求字段。
 
 必要字段准备完成后进入 Waiting to Submit。
@@ -263,7 +263,7 @@ ERP 必须保留旧 Listing 历史。
 - Description；
 - Images；
 - Attributes；
-- Warehouse；
+- Platform Warehouse / Fulfillment Resource（如果平台支持）；
 - SKU；
 - UPC；
 - GTIN；
@@ -278,6 +278,43 @@ ERP 必须保留旧 Listing 历史。
 - 是否影响平台 Catalog Identity；
 
 必须由各 Platform Adapter 的 Capability Matrix 定义，不能写进通用 Listing 模型。
+
+---
+
+## 13.1 Walmart Platform Warehouse / Shipping Template 当前业务事实
+
+当前 Walmart Store 的 Warehouse 与 Shipping Template 都属于：
+
+> Walmart 平台已经存在的 Platform Resource。
+
+ERP 的职责是从 Walmart 同步这些资源、保存引用，并在 Listing / Inventory 操作时按用户选择传递正确的平台参数；它们不是 ERP 自有实体仓库或 WMS 库存。
+
+当前已确认的业务行为：
+
+### Listing 上架
+
+```text
+Listing Submit
+├─ 可显式选择 Platform Warehouse
+│    └─ 未选择 → 使用 Walmart Default Warehouse
+│
+└─ 可显式指定 Shipping Template
+     └─ 未指定 → Walmart 根据最终 Warehouse 地区使用默认 Shipping Template
+```
+
+### Inventory Maintenance
+
+```text
+Inventory Update
+├─ 可显式指定 Platform Warehouse
+│    └─ 未指定 → 维护 Walmart Default Warehouse 的库存
+│
+└─ 可选：同时调整 Shipping Template
+```
+
+因此通用 ERP 不能把 `warehouse_id` 或 `shipping_template_id` 设计成所有 Listing / Inventory Operation 的业务必填项。
+
+具体 Walmart API 参数、默认仓识别方式和 Shipping Template 技术规则留给后续 Walmart Platform Capability Specification。
 
 ---
 
@@ -297,7 +334,7 @@ ERP 必须保留旧 Listing 历史。
 - Title / Brand / Description / Images；
 - Attributes / Product Type；
 - SKU / UPC / GTIN；
-- Warehouse / Fulfillment 结构；
+- Platform Warehouse / Fulfillment Resource 结构；
 - Retire / Delete / Re-list；
 - 其他 Catalog 结构修改。
 
@@ -313,7 +350,7 @@ Product
 → Listing Draft
 → Store Selected / Assigned
 → Listing Created
-→ 补齐 SKU / UPC / GTIN / Price / Inventory / Warehouse / Final Listing Values
+→ 补齐 SKU / UPC / GTIN / Price / Inventory / Platform Resource References / Final Listing Values
 → Ready
 → Waiting to Submit
 → Submitted
@@ -334,7 +371,7 @@ Failed
 ```text
 Published
 → Online Operation
-→ 价格 / 库存 / 内容 / 来源 / 仓库等持续维护
+→ 价格 / 库存 / 内容 / 来源 / 平台资源等持续维护
 → 可能 Unpublished
 → 原因判断
 → Fix / Wait / Resume / Zero Inventory / Retire / Delete / Permanent Exit
@@ -364,3 +401,6 @@ Delete / Exit 后未来仍可能 Re-list。
 16. 平台字段的具体可修改性由 Platform Capability Matrix 定义；
 17. Price / Inventory 属日常普通维护，其他 Listing 修改当前按较高风险处理；
 18. 高风险不等于必须人工审批。
+19. Platform Warehouse / Shipping Template 属于平台资源，不代表 ERP 拥有 Physical Warehouse Domain。
+20. Walmart Listing / Inventory 操作允许不显式指定 Warehouse，此时使用平台 Default Warehouse。
+21. Walmart Shipping Template 可显式指定；未指定时由平台根据最终 Warehouse 使用默认模板。
