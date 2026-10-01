@@ -1,4 +1,4 @@
-# 采购生命周期业务模型 v0.2
+# 采购生命周期业务模型 v0.3
 
 > 状态：已确认  
 > 所属阶段：ERP 阶段 0 — 业务建模
@@ -284,11 +284,17 @@ Seller
 
 表示来源平台显示该采购商品已经 Shipped。
 
-当前团队将 Shipped 视为采购执行动作已经基本完成。
+当前团队将 Shipped 视为：
 
-此时销售订单可以正式进入后续物流跟踪阶段。
+> Purchase 自身的重要采购执行节点。
 
-但 Purchase 本身仍然不能停止追踪。
+如果 Team 选择在 ERP 中继续观察该 Source Shipment，则可以继续追踪其运输状态。
+
+但必须明确：
+
+> Source Shipped 不自动触发或要求 Platform Shipment，也不代表 Sales Order 必须进入某个固定物流阶段。
+
+Purchase 本身仍然可以继续追踪到 Delivered / 已签收。
 
 ## 19. 已签收
 
@@ -416,55 +422,87 @@ Amazon / Source
 Walmart Customer
 ```
 
-## 31. 第三方物流的角色
+## 31. Procurement 与 Logistics 的边界
 
-第三方物流并不实际接收 Amazon 商品后再转运给客户，而主要提供 Walmart 可以接受和追踪的物流单号 / 物流轨迹服务。
+Procurement 负责：
 
-可能使用：
+- Procurement Task；
+- Actual Purchase；
+- Purchase Quantity；
+- Actual Cost；
+- Purchase Status；
+- Source Purchase Evidence；
+- Source Shipment Fact（如果可获得）。
 
-- 佳成；
-- 递四方；
-- USPS；
-- 其他物流服务。
+Procurement 不负责定义：
 
-## 32. 销售平台 Tracking 与 Source Tracking 不是同一个概念
+- Walmart Platform Shipment；
+- Platform Tracking；
+- Carrier Tracking Mapping；
+- Tracking Synchronization；
+- Delay / Lost Detection。
 
-实际商品配送是 Amazon → Customer。
+这些属于 Logistics Domain。
 
-Walmart 侧提交的 Tracking 可能使用第三方物流提供的单号。
+---
 
-因此必须区分：
+## 32. Source Tracking 是 Purchase 的可选关联事实
 
-### Source Tracking
+Purchase 可能能够获得 Source Tracking，也可能：
 
-Amazon / Source 侧真实配送信息。
+- TBA 等数据只能有限观察；
+- 外部采购团队无法提供完整 Tracking；
+- Team 根本不使用 ERP 管理 Source Logistics。
 
-### Sales Platform Tracking
+因此：
 
-提交给 Walmart 等销售平台的 Carrier、Tracking Number 和 Tracking Events。
+> Source Tracking 可以存在，也可以 Unknown / Unobservable。
 
-二者有关联但不是同一个 Tracking 对象。
+缺少 Source Tracking 不自动代表 Purchase Error。
 
-## 33. 当前第三方轨迹业务
+---
 
-前期第三方物流轨迹按照既定过程运行。
+## 33. Platform Shipment 与 Purchase 不存在固定顺序
 
-后续商品进入清关及后续运输阶段后，逐步同步真实物流轨迹，一直到 Delivered。
+Sales Order 的 Platform Shipment：
 
-整个过程当前主要依靠人工手动操作，是明显的高人工成本环节。
+> 可以与 Purchase 建立业务关联，但不存在系统级必然先后关系。
 
-## 34. 物流同步不属于 Purchase 本身
+不能硬编码：
 
-Purchase Lifecycle 只负责知道：
+```text
+Purchase Shipped
+→ Platform Shipment
+```
 
-- Ordered；
-- Shipped；
-- Delivered；
-- Source Tracking。
+也不能要求：
 
-而第三方物流单号、Walmart Shipment、Platform Tracking Sync、Tracking Event Mapping 属于 Logistics Lifecycle。
+> Platform Shipment 必须能够证明 Purchase 已经 Shipped。
 
-因此采购模型在这里截止。
+具体前置条件由 Team Workflow 决定。
+
+---
+
+## 34. Procurement 模型在 Purchase 事实处截止
+
+Procurement 只需要准确回答：
+
+- 为什么需要采购；
+- 谁负责采购；
+- 实际从哪里采购；
+- 买了多少；
+- 花了多少钱；
+- Purchase 当前是什么状态；
+- 是否存在取消 / 退款 / 异常；
+- 是否能够观察 Source Shipment。
+
+Platform Shipment、Platform Tracking 和物流异常处理以：
+
+> [物流生命周期](./06-logistics-lifecycle.md)
+
+为准。
+
+---
 
 ## 35. 当前完整采购主流程
 
@@ -496,9 +534,9 @@ Place Purchase
 ↓
 已发货
 ↓
-采购执行完成
+Purchase 执行节点完成
 ↓
-进入 Logistics Tracking
+Purchase 自身继续追踪（如果可观察）
 ↓
 已签收
 ```
@@ -569,23 +607,24 @@ ERP 需要持续判断 Procurement Task 的目标数量是否已经全部覆盖�
 15. 无法采购不自动等于取消销售订单。
 16. Purchase 正常状态为：待采购 → 已下单 → 已发货 → 已签收。
 17. 不设置“采购成功”状态。
-18. Source 显示 Shipped 后，采购执行动作可以视为完成。
-19. Purchase 仍持续追踪至 Delivered。
-20. 销售订单与采购订单关联但分别管理。
-21. 销售订单取消不强制同步取消采购。
-22. Purchase 异常后允许重新采购。
-23. 所有历史 Purchase 必须保留。
-24. 最终采购成本来源于实际 Purchase。
-25. 内部采购主要使用公司信用卡或虚拟卡。
-26. 内部采购不存在逐单请款流程。
-27. 外部采购团队采用周期性对账结算。
-28. 外部采购可以保存发货凭证。
-29. Purchase 状态和 External Settlement 状态必须分开。
-30. Source 直接配送给最终客户。
-31. 第三方物流主要提供销售平台可接受的 Tracking / 轨迹服务。
-32. Source Tracking 与 Sales Platform Tracking 必须分开。
-33. 第三方物流轨迹同步属于 Logistics Lifecycle，而不是 Procurement Lifecycle。
-34. 当前物流轨迹同步人工成本较高，是后续业务建模的重要问题。
+18. Source 显示 Shipped 后，Purchase 自身的采购执行动作可以视为基本完成。
+19. Source Shipped 不自动触发 Platform Shipment，也不形成固定 Sales Order 状态跳转。
+20. Purchase 可以继续追踪至 Delivered；Source Shipment 不可观察时允许保持 Unknown。
+21. 销售订单与采购订单关联但分别管理。
+22. 销售订单取消不强制同步取消采购。
+23. Purchase 异常后允许重新采购。
+24. 所有历史 Purchase 必须保留。
+25. 最终采购成本来源于实际 Purchase。
+26. 内部采购主要使用公司信用卡或虚拟卡。
+27. 内部采购不存在逐单请款流程。
+28. 外部采购团队采用周期性对账结算。
+29. 外部采购可以保存发货凭证。
+30. Purchase 状态和 External Settlement 状态必须分开。
+31. 当前团队的 Source 通常直接配送给最终客户。
+32. Procurement 不定义第三方 Platform Tracking 的生命周期。
+33. Source Tracking 与 Sales Platform Tracking 必须分开。
+34. Platform Shipment / Tracking / Delay / Lost 属于 Logistics Lifecycle，而不是 Procurement Lifecycle。
+35. Purchase 与 Platform Shipment 可以关联，但不存在 ERP 全局固定先后关系。
 
 ## 40. 采购生命周期建模结论
 
