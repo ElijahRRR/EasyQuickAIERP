@@ -1,6 +1,6 @@
 # EasyQuickAIERP — 阶段 0：业务建模
 
-> 状态：持续讨论中的业务事实基线  
+> 状态：已收口（Baseline v1）  
 > 目标：先理解业务，再设计系统；先建设基础能力，再通过 Workflow 组合业务流程。
 
 ## 1. 本目录的定位
@@ -48,7 +48,7 @@
 - 商品审核；
 - 平台选择；
 - 店铺分配；
-- 仓库选择；
+- 平台资源引用（按平台能力，例如 Walmart Platform Warehouse / Shipping Template）；
 - 来源管理；
 - Listing Draft；
 - 商品资料校验与生成；
@@ -87,20 +87,23 @@
 → 在线维护
 ```
 
-当前订单流程可能采用：
+当前订单流程可以由 Team Workflow 组合为：
 
 ```text
 同步订单
 → 订单审核
-→ 采购
-→ 发货
-→ 物流跟踪
-→ Delivered
-→ 售后监控
-→ 对账
-→ 利润核算
-→ 售后窗口结束
+├─ Pending → 人工复核 / 定时重查
+├─ Reject  → 运营处理 / 取消
+└─ Pass    → 允许采购
+
+并行 / 独立能力：
+- Platform Shipment
+- Logistics Observation
+- After-sales Sync
+- Settlement / Profit
 ```
+
+其中 Purchase、Source Shipment、Platform Shipment 不存在 ERP 全局固定先后关系。
 
 其他团队可以直接引用模板，也可以创建完全不同的 Workflow。
 
@@ -122,16 +125,18 @@ AI、Workflow、前端人工操作最终应复用相同的 ERP Business Operatio
 
 | 文档 | 当前版本 | 内容 |
 |---|---:|---|
-| [商品生命周期](./01-product-lifecycle.md) | v0.4 | 商品发现、团队商品池、审核、平台、店铺分配、多来源、资料准备、在线经营与退出 |
-| [Listing 生命周期](./02-listing-lifecycle.md) | v0.1 | Listing Draft、Listing 身份、提交状态、平台状态、库存归零、Retire、Delete、重新上架 |
-| [Platform Error Management](./03-platform-error-management.md) | v0.1 | 首次上架失败与 Unpublished、错误分类、根因、团队处理策略、自动修复边界 |
-| [订单生命周期](./04-order-lifecycle.md) | v0.1 | 订单同步、订单审核、采购、物流、Delivered、售后、对账、利润和最终闭环 |
-| [采购生命周期](./05-procurement-lifecycle.md) | v0.2 | 采购任务、拆单采购、多来源、采购限价、实际成本、外部采购结算和采购/物流边界 |
+| [商品生命周期](./01-product-lifecycle.md) | v0.5 | 商品发现、团队商品池、审核、平台、店铺分配、多来源、资料准备、在线经营与退出 |
+| [Listing 生命周期](./02-listing-lifecycle.md) | v0.2 | Listing Draft、Listing 身份、提交状态、平台状态、库存归零、Retire、Delete、重新上架 |
+| [Platform Error Management](./03-platform-error-management.md) | v0.2 | 首次上架失败与 Unpublished、错误分类、根因、团队处理策略、自动修复边界 |
+| [订单生命周期](./04-order-lifecycle.md) | v0.2 | 订单同步、订单审核、采购、物流、Delivered、售后、对账、利润和最终闭环 |
+| [采购生命周期](./05-procurement-lifecycle.md) | v0.3 | 采购任务、拆单采购、多来源、采购限价、实际成本、外部采购结算和采购/物流边界 |
 | [物流生命周期](./06-logistics-lifecycle.md) | v0.2 | Source Shipment、Platform Shipment、Tracking、可观察范围、Delivered、Delay/Lost 与物流/采购解耦 |
 | [售后生命周期](./07-after-sales-lifecycle.md) | v0.3 | 平台售后数据、Return/Refund、待处理售后、采购侧独立处置、估算财务影响与对账边界 |
 | [对账与利润生命周期](./08-reconciliation-profit-lifecycle.md) | v0.1 | Order Line 级预计利润、实际采购成本、跨账期 Settlement、Current Reconciled Profit 与 Store Payout |
-| [店铺生命周期](./09-store-lifecycle.md) | v0.2 | Store 平台身份、三类独立状态、连接关系、经营配置、解绑与历史负责人/运营组归属 |
+| [店铺生命周期](./09-store-lifecycle.md) | v0.3 | Store 平台身份、三类独立状态、连接关系、经营配置、解绑与历史负责人/运营组归属 |
 | [Team / User / Permission / Organization](./10-team-user-permission-organization.md) | v0.2 | Team 隔离、Group、Store Assignment、Platform/Store/Function/Action 权限、Role Template 与 Digital Employee |
+| [Risk Intelligence / Blacklist](./11-risk-intelligence-blacklist.md) | v0.1 | Brand / Product / Seller 风险、System Public / Team Private / Whitelist 优先级与 Workflow 边界 |
+| [阶段 0 收口审查](./12-stage-0-closure-review.md) | v1.0 | 统一修订旧结论、确认阶段 0 核心不变量并正式关闭 Baseline v1 |
 
 ---
 
@@ -173,14 +178,71 @@ AI、Workflow、前端人工操作最终应复用相同的 ERP Business Operatio
 
 ---
 
-## 6. 下一业务域
+## 6. 阶段 0 收口状态
 
-订单主链、Store Lifecycle 与 Team / User / Permission / Organization Model 已形成阶段 0 基线。
+阶段 0 已完成：
 
-下一步优先梳理：
+- Product；
+- Listing；
+- Platform Error；
+- Order；
+- Procurement；
+- Logistics；
+- After-sales；
+- Reconciliation & Profit；
+- Store；
+- Team / User / Permission / Organization；
+- Risk Intelligence / Blacklist。
 
-> **Warehouse / Fulfillment Model**
+统一收口结论见：
 
-需要明确 Warehouse 在 ERP 中到底代表什么、Store 与 Warehouse 的关系、库存和履约方式如何表达，以及自有仓、平台仓、供应商直发等模式是否需要共用一套基础业务模型。
+> [阶段 0 收口审查](./12-stage-0-closure-review.md)
 
-完成这一横向业务域后，再评估阶段 0 是否还有必须单独建模的核心对象，然后决定是否进入阶段 1：ERP 地基。
+当前正式状态：
+
+> **阶段 0：业务建模 = Closed / Baseline v1**
+
+Closed 不表示业务模型以后永远不能修改。新的真实业务事实仍然可以通过更新对应 Markdown 并保留 Git 历史继续演进。
+
+---
+
+## 7. 当前明确不建立的业务域
+
+现阶段不因为“ERP 应该完整”而提前建立：
+
+- Physical Warehouse / WMS；
+- 完整 CRM / Message Center；
+- 完整会计 / 总账系统；
+- Workflow Engine 技术实现；
+- AI Agent 技术实现。
+
+Walmart Platform Warehouse / Shipping Template 当前属于：
+
+> Platform Resource
+
+不是 ERP 自有 Physical Warehouse Domain。
+
+---
+
+## 8. 下一阶段
+
+下一步正式进入：
+
+> **阶段 1：ERP 地基**
+
+阶段 1 开始讨论技术结构，但必须以本目录的 Baseline v1 作为业务事实来源。
+
+优先需要设计的地基包括：
+
+- Team / Tenant 数据隔离；
+- 稳定业务 Identity；
+- Platform Adapter / Capability Boundary；
+- Business Operations；
+- Permission Enforcement；
+- Actor / Audit Log；
+- Credential / Secret Management；
+- Task / Job / Async Operation；
+- 模块边界与数据所有权；
+- 为未来 Workflow / Open API / AI 提供统一调用基础。
+
+阶段 1 不应直接照搬旧项目表结构，也不能把当前 Team Workflow 硬编码成系统唯一流程。
