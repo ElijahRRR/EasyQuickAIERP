@@ -1,4 +1,4 @@
-# Platform Error Management 业务模型 v0.1
+# Platform Error Management 业务模型 v0.2
 
 > 状态：已确认业务基线
 
@@ -114,10 +114,11 @@ Platform Error Detected
 4. Brand；
 5. Compliance / Policy；
 6. Inventory / Price；
-7. Store / Account；
-8. Platform System；
-9. Time / Date / Expiration；
-10. Unknown / Unclassified。
+7. Store / Account Platform State；
+8. Connection / Authorization；
+9. Platform System；
+10. Time / Date / Expiration；
+11. Unknown / Unclassified。
 
 未来平台可继续增加子类型，但一级分类尽量保持稳定。
 
@@ -233,21 +234,56 @@ Platform Error Detected
 
 ---
 
-## 13. Store / Account Error
+## 13. Store / Account Platform State Error
 
 可能包括：
 
 - Store Suspended；
-- API Permission；
-- Authentication；
 - Account Restriction；
-- 店铺暂时不可销售。
+- 店铺暂时不可销售；
+- 其他由平台明确返回的 Store / Account 状态限制。
 
 特点：
 
 > Product 本身可能完全没有问题。
 
-因此 Store Error 不应自动改变 Product Risk State，也不应默认永久删除 Listing。
+因此 Store / Account Platform Error 不应自动改变 Product Risk State，也不应默认永久删除 Listing。
+
+同时必须遵守 Store Lifecycle 的状态边界：
+
+> Platform State 只能由平台事实确认，不能由 API 连接失败推断。
+
+---
+
+## 13.1 Connection / Authorization Error
+
+用于表达 ERP 与 Store 的连接或授权问题，例如：
+
+- Credential Invalid；
+- Token Failed；
+- Authentication Failed；
+- API Permission Missing；
+- Connectivity Failure。
+
+这类错误属于：
+
+> Store Connection Health / Authorization。
+
+它不等于：
+
+- Store Suspended；
+- Store Terminated；
+- Product Error。
+
+因此：
+
+```text
+Connection Failed
+≠
+Platform Store State
+```
+
+连接恢复后，不应要求 Product / Listing 重新建立业务身份。
 
 ---
 
@@ -318,7 +354,8 @@ Expiration Error
 | Brand | 放弃当前 Listing |
 | Compliance | 放弃当前 Listing |
 | Inventory / Price | 日常维护逻辑处理 |
-| Store / Account | 等待或修复 Store 状态 |
+| Store / Account Platform State | 按平台真实 Store 状态等待或处理 |
+| Connection / Authorization | 修复凭证、授权或连接，不推断平台状态 |
 | Platform System | 查询、等待、重试 |
 | Unknown | 不自动执行破坏性动作 |
 
@@ -546,3 +583,5 @@ Daily Listing Error Workflow
 18. Error Handler 与 Error Classification 必须解耦；
 19. Team Workflow 可以组合不同 Error Handler；
 20. Error Management 是 ERP 基础能力，自动错误处理属于后续 Workflow。
+21. Store Platform State Error 与 Connection / Authorization Error 必须分开。
+22. Credential / Token / API Permission 问题不得自动推断 Store Suspended / Terminated。
