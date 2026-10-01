@@ -1,4 +1,4 @@
-# 商品生命周期业务模型 v0.4
+# 商品生命周期业务模型 v0.5
 
 > 状态：已确认业务基线  
 > 适用范围：描述当前团队已确认的商品业务事实；其中部分步骤是可选业务能力，不代表所有团队必须经过。
@@ -14,7 +14,7 @@
 → （可选）商品审核
 → 确定销售平台
 → （可选）店铺分配
-→ 确定店铺 / 仓库
+→ 确定店铺
 → 确定主来源 / 备用来源
 → 整理并检查刊登资料
 → 按目标平台政策和 Spec 补充资料
@@ -254,20 +254,30 @@ ERP 不统一限制：
 
 ---
 
-## 9. 仓库分配
+## 9. 平台资源引用（按平台需要）
 
-Store 确定以后，可进一步确定 Warehouse / Fulfillment Node。
+Store 确定以后，某些平台操作可能需要引用平台自身已经存在的资源，例如：
 
-完整关系：
+- Platform Warehouse；
+- Shipping Template；
+- 其他平台级 Fulfillment / Inventory Resource。
+
+这些资源：
+
+> 不属于 Product 生命周期的固定层级，也不代表 ERP 已经拥有实体 Warehouse / WMS Domain。
+
+因此通用关系保持为：
 
 ```text
 Product
 → Platform
 → Store
-→ Warehouse
+→ Listing
 ```
 
-仓库可能影响库存、配送、配送时效、Listing 参数及后续库存维护。
+Listing 上架、库存维护等操作是否需要 Platform Resource、是否可省略、以及平台默认行为，由对应 Platform Capability Specification 定义。
+
+当前 Walmart 业务中，ERP 需要同步并保存 Walmart Platform Warehouse 等平台资源引用，但不在阶段 0 将其建模为 ERP 自有实体仓库。
 
 ---
 
@@ -482,7 +492,7 @@ Listing 成功以后持续关注：
 - 店铺问题；
 - 来源失效。
 
-未来可更换 Source / Warehouse / Store，或者恢复、重新上架。
+未来可更换 Source / Store，调整平台资源配置，或者恢复、重新上架。
 
 ### 永久或高风险退出
 
@@ -527,3 +537,5 @@ Listing 成功以后持续关注：
 24. Final Listing Value 是平台发布真值；
 25. 正常商品上架不要求逐件人工批准；
 26. 当前团队流程未来可以作为 Workflow Template，但不成为 ERP 强制流程。
+27. Platform Warehouse 等平台资源不属于 Product 生命周期的固定层级。
+28. 当前阶段不建立 ERP 自有 Physical Warehouse / WMS Domain；未来出现真实仓储履约需求时再独立建模。
