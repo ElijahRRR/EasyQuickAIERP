@@ -2,7 +2,7 @@
 
 EasyQuickAIERP 是一个面向多团队、多销售平台、多商品来源的可扩展 ERP 新项目。
 
-当前阶段：**阶段 0 — 业务建模**。
+当前阶段：**阶段 1 — ERP 地基**。
 
 项目当前不以迁移旧系统为主线。旧系统只作为业务经验、已验证能力和实现参考；新 ERP 先建立正确的业务模型与基础能力，再在后续阶段通过 Workflow 组合自动化流程。
 
@@ -24,18 +24,22 @@ EasyQuickAIERP 是一个面向多团队、多销售平台、多商品来源的�
 阶段 6  内置 AI
 ```
 
-## 当前权威业务文档
+## 当前权威文档
 
-阶段 0 文档统一保存在：
+阶段 0 业务基线：
 
 [`docs/00-business-modeling/`](./docs/00-business-modeling/)
 
-当前已经确认：
+阶段 1 ERP 地基：
 
-- [阶段 0 索引与建模原则](./docs/00-business-modeling/README.md)
-- [商品生命周期业务模型](./docs/00-business-modeling/01-product-lifecycle.md)
-- [Listing 生命周期业务模型](./docs/00-business-modeling/02-listing-lifecycle.md)
-- [Platform Error Management 业务模型](./docs/00-business-modeling/03-platform-error-management.md)
+[`docs/01-foundation/`](./docs/01-foundation/)
+
+当前关键入口：
+
+- [阶段 0 — 业务建模 Baseline v1](./docs/00-business-modeling/README.md)
+- [阶段 0 收口审查](./docs/00-business-modeling/12-stage-0-closure-review.md)
+- [阶段 1 — ERP 地基索引](./docs/01-foundation/README.md)
+- [Foundation Architecture v0.1](./docs/01-foundation/01-foundation-architecture.md)
 
 ## 文档原则
 
@@ -49,6 +53,8 @@ EasyQuickAIERP 是一个面向多团队、多销售平台、多商品来源的�
 
 ## 下一步
 
-继续阶段 0，下一业务域：
+继续阶段 1：
 
-> **Order Lifecycle — 订单生命周期**
+> **Domain & Data Ownership Map**
+
+先明确 Domain 边界、核心对象、数据 Owner 和跨 Domain 协作，再进入数据库 Schema 与模块结构设计。
