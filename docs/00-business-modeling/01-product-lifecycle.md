@@ -1,4 +1,4 @@
-# 商品生命周期业务模型 v0.5
+# 商品生命周期业务模型 v0.6
 
 > 状态：已确认业务基线  
 > 适用范围：描述当前团队已确认的商品业务事实；其中部分步骤是可选业务能力，不代表所有团队必须经过。
@@ -145,6 +145,85 @@ Pass 不等于没有任何辅助风险。
 审核只产生结果、原因、辅助风险和证据。
 
 Blacklist / Risk Intelligence 是独立体系，不因一次审核自动生成。
+
+### 5.7 审核结果必须绑定审核上下文
+
+Product Audit 不能只保存一个长期不变的 `Pass / Reject / Pending`。
+
+每一次正式审核至少需要能够还原：
+
+- Product；
+- Target Platform；
+- 审核时使用的 Content Version；
+- 审核时使用的 Source / Evidence；
+- Audit Rule / Policy Version；
+- Audit Time；
+- Audit Result；
+- 必要的 Actor / Trigger Source。
+
+因此：
+
+> **审核结果是针对“某个平台 + 某一版内容 + 某一批证据 + 某一版规则”得出的历史结论。**
+
+历史 Audit Record 不因后续变化而被覆盖。
+
+### 5.8 Audit Result 与 Audit Validity 分开
+
+正式 Audit Result 仍然只有：
+
+- Pass；
+- Reject；
+- Pending。
+
+另外单独判断该历史审核结论当前是否仍可用于证明当前版本，例如：
+
+- Valid；
+- Stale / Re-audit Required。
+
+旧 Pass 变为 Stale 时：
+
+> 不能把原 Pass 改写成 Reject，也不能删除原审核记录。
+
+它仍然表示当时版本在当时规则下通过，只是不能继续证明当前版本已通过。
+
+至少以下情况可能使现有审核结论失效：
+
+1. 审核所依赖的重要内容发生实质变化，例如 Brand、Title、Description、Product Type、Category、Material、Claims、关键规格等；
+2. Target Platform 改变；
+3. Audit Rule / Platform Policy 版本变化，而且变化可能影响该 Product；
+4. 原审核依赖的关键证据被证明错误或失效；
+5. 出现新的不可覆盖硬风险，例如确认命中 TRO。
+
+仅切换 Primary / Backup Source：
+
+> 如果仍然确认是同一个 Product，且审核涉及的商品事实没有实质变化，不自动使 Product Audit 失效。
+
+当前不采用“审核超过固定 30 / 60 / 90 天自动过期”的统一规则。
+
+### 5.9 Product Audit 与 Listing 提交前检查分开
+
+必须区分：
+
+```text
+Product Audit
+= 这个商品是否允许面向目标平台经营
+
+Listing Pre-submit Validation
+= 当前这版 Final Listing Data 是否满足目标平台要求
+
+Order Audit
+= 已产生订单当前是否允许继续履约
+```
+
+Product Audit Pass 不代表以后任意 AI / Human 修改后的 Listing 文案自动合规。
+
+Listing 提交前仍必须针对：
+
+- 当前 Final Listing Value Version；
+- 当前 Target Platform；
+- 当前适用规则；
+
+执行相应校验。
 
 ---
 
@@ -313,6 +392,43 @@ Listing 上架、库存维护等操作是否需要 Platform Resource、是否可
 - 本身不改变已有 Listing 身份。
 
 因此 Source Relation、Product、Listing 是三个不同层次。
+
+### 来源商品与 Seller Offer 分开
+
+Amazon Product Source 当前按 ASIN 级识别。
+
+Seller、Price、Stock、Fulfillment、Delivery 等属于某个时间点的可购买条件，不构成 Source 的永久身份。
+
+因此概念上需要区分：
+
+```text
+Product Source
+= 来源商品是谁（例如 ASIN）
+
+Source Offer Snapshot
+= 某个时间点由哪个 Seller、以什么价格、库存和配送条件提供
+```
+
+同一个 ASIN 的 Seller 变化不创建新的 Product Source，但 Order Audit / Procurement 等需要保留当时实际观察到的 Offer Evidence。
+
+### Amazon 变体关系
+
+Amazon Source 需要能够表达 Parent / Child ASIN 与具体 Variant 信息，例如：
+
+- Parent ASIN；
+- Child / Purchasable ASIN；
+- Color；
+- Size；
+- Pack / Quantity；
+- 其他关键变体属性。
+
+实际采购与履约应尽可能落到具体可购买的 ASIN / Variant。
+
+当人工把多个 ASIN 关联到同一个 Product 时，需要确认：
+
+> 这些具体来源变体确实能够履约同一个 Product，而不是仅仅标题相似。
+
+系统 / AI 可以给出候选和差异提示，但默认不能自动建立这种同商品关系。
 
 ---
 
@@ -539,3 +655,9 @@ Listing 成功以后持续关注：
 26. 当前团队流程未来可以作为 Workflow Template，但不成为 ERP 强制流程。
 27. Platform Warehouse 等平台资源不属于 Product 生命周期的固定层级。
 28. 当前阶段不建立 ERP 自有 Physical Warehouse / WMS Domain；未来出现真实仓储履约需求时再独立建模。
+29. Product Audit 必须绑定 Target Platform、Content Version、Evidence 和 Rule / Policy Version。
+30. Audit Result 与 Audit Validity 分开，历史 Pass 可以变为 Stale，但不能被覆盖成新的结果。
+31. Product Audit、Listing Pre-submit Validation、Order Audit 是三个不同判断。
+32. Product Source 按来源商品身份管理；Seller / Price / Stock / Delivery 属于可变化的 Offer 条件。
+33. Amazon Parent / Child ASIN 与具体 Variant 需要能够被表达。
+34. 多 ASIN 归入同一 Product 原则上由人工确认具体变体是否可互相履约。
