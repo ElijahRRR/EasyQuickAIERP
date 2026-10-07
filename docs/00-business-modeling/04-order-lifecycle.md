@@ -1,4 +1,4 @@
-# 订单生命周期业务模型 v0.2
+# 订单生命周期业务模型 v0.3
 
 > 状态：阶段 0 已确认业务基线  
 > 适用说明：本文是 Order Domain 的总模型。Procurement、Logistics、After-sales、Reconciliation & Profit 的细节分别以 05–08 文档为准。
@@ -95,6 +95,31 @@ Order Audit 判断一个已经产生的销售订单是否适合继续履约。
 具体规则属于：
 
 > Team Order Audit Policy。
+
+### 5.1 Order Audit 必须绑定当时证据与规则版本
+
+每一次 Order Audit 都是历史业务判断，不能只保存最终结果。
+
+审核记录至少需要能够还原：
+
+- 当时选择 / 观察到的 Product Source；
+- Source Offer Snapshot；
+- 实际 Seller；
+- Variant；
+- Price；
+- Stock；
+- Fulfillment；
+- ETA / Promise Date；
+- Ship-to Context；
+- Team Order Audit Policy / Rule Version；
+- Audit Time；
+- Actor / Trigger。
+
+因此：
+
+> 以后 Source 最新价格、Seller 或 Team Policy 发生变化，不能用新数据重解释过去为什么 Pass / Reject / Pending。
+
+同一个 Order Line 的多次 Pending / Recheck / Pass / Reject 全部作为独立历史记录保留。
 
 ---
 
@@ -535,23 +560,25 @@ Order 总模型负责建立和关联：
 2. Platform Order Fact 与 ERP Decision 分开。
 3. Order 与 Order Line 都是核心对象。
 4. Order Audit 正式结果为 Pass / Reject / Pending。
-5. Pending 可以是人工复核，也可以是等待未来数据变化后重新检查。
-6. 暂时缺货可以保持 Pending，并按 Team Policy 等待 X 天后重新判断。
-7. Order Audit Pass 不等于 Purchase 已发生。
-8. Order Audit Reject 不等于平台订单已经 Cancelled。
-9. Procurement、Platform Shipment、Logistics、After-sales、Finance 是相对独立业务能力。
-10. Purchase 与 Platform Shipment 没有 ERP 全局固定先后关系。
-11. 一个 Order Line 可以关联多个 Purchase。
-12. Actual Procurement Source 与 Product Primary Source 分开。
-13. Sales Order Cancellation 不强制同步 Purchase Cancellation。
-14. Team 可以不使用 ERP 内置发货 / 物流能力。
-15. Platform Delivered 不等于所有 Logistics Observation 已闭环。
-16. Delay / Lost 首先属于 Logistics Domain。
-17. 当前售后核心是 Return / Refund 平台数据，不做 CRM。
-18. Estimated Profit 与 Current Reconciled Profit 分开。
-19. 不建立复杂 Final Profit 状态机。
-20. After-sales Window Closed 是订单业务闭环的重要参考，但不冻结后续 Settlement 数据。
-21. 当前团队 Order 流程可以作为 Workflow Template，而不是 ERP 全局流程。
+5. 每次 Order Audit 必须绑定当时 Evidence 与 Team Order Audit Policy / Rule Version。
+6. 同一 Order Line 的多次 Audit / Recheck 历史全部保留。
+23. Pending 可以是人工复核，也可以是等待未来数据变化后重新检查。
+22. 暂时缺货可以保持 Pending，并按 Team Policy 等待 X 天后重新判断。
+23. Order Audit Pass 不等于 Purchase 已发生。
+22. Order Audit Reject 不等于平台订单已经 Cancelled。
+23. Procurement、Platform Shipment、Logistics、After-sales、Finance 是相对独立业务能力。
+22. Purchase 与 Platform Shipment 没有 ERP 全局固定先后关系。
+23. 一个 Order Line 可以关联多个 Purchase。
+22. Actual Procurement Source 与 Product Primary Source 分开。
+23. Sales Order Cancellation 不强制同步 Purchase Cancellation。
+22. Team 可以不使用 ERP 内置发货 / 物流能力。
+23. Platform Delivered 不等于所有 Logistics Observation 已闭环。
+22. Delay / Lost 首先属于 Logistics Domain。
+23. 当前售后核心是 Return / Refund 平台数据，不做 CRM。
+22. Estimated Profit 与 Current Reconciled Profit 分开。
+23. 不建立复杂 Final Profit 状态机。
+22. After-sales Window Closed 是订单业务闭环的重要参考，但不冻结后续 Settlement 数据。
+23. 当前团队 Order 流程可以作为 Workflow Template，而不是 ERP 全局流程。
 
 ---
 
