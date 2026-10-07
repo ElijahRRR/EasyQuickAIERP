@@ -1,4 +1,4 @@
-# Team / User / Permission / Organization Model v0.2
+# Team / User / Permission / Organization Model v0.3
 
 > 状态：已确认  
 > 所属阶段：ERP 阶段 0 — 业务建模
@@ -647,6 +647,78 @@ Action
 
 ---
 
+# 33.1 System Sync Service 是独立后台 Actor
+
+需要把系统同步身份与 Human / Digital Employee 区分。
+
+例如：
+
+- Order Sync；
+- Return Sync；
+- Settlement Sync；
+- Listing State Sync；
+
+可以由 Team / Store 级 Platform Sync Service 执行。
+
+它不应长期冒充最初绑定 Store 的 Human User。
+
+因此某个创建 Store 的员工离职以后：
+
+> Store 的平台事实同步不应该因此停止。
+
+但 System Sync Service 只能获得完成平台事实同步所需的受限能力。
+
+不能因为它属于 System Actor，就自动拥有：
+
+- Refund；
+- Cancel Sales Order；
+- Change Price；
+- Change Inventory；
+- Take Down Listing；
+- 其他主动高价值业务动作。
+
+---
+
+# 33.2 后台 Actor 的权限在真正执行时重新校验
+
+对于 User Delegated Job / Digital Employee Job：
+
+> 入队时有权限，不代表几小时后真正执行时仍然有权限。
+
+因此需要同时区分：
+
+```text
+Requested By
+= 谁触发 / 创建了任务
+
+Execute As
+= 真正执行时按哪个 Actor 的 Permission 校验
+```
+
+实际 Business Operation 执行前，必须检查 Execute As 的当前：
+
+- Actor Enable State；
+- Platform Scope；
+- Store Scope；
+- Function；
+- Action。
+
+如果 Permission 在任务排队后被撤销：
+
+> 尚未执行的后续业务动作不得继续。
+
+已成功发生的外部平台动作保留历史，不进行假回滚。
+
+长任务可以形成 Partial Success。
+
+一次性用户委托任务因为撤权停止后，即使后来重新授予权限：
+
+> 不应自动恢复旧任务，原则上应重新确认 / 重新提交。
+
+Digital Employee 同样按其自身当前 Permission 校验，不继承创建者的历史权限。
+
+---
+
 # 34. 每一个操作都需要 Audit Actor
 
 重要业务动作应记录：
@@ -804,7 +876,11 @@ Action
 30. Digital Employee 不继承创建者全部权限。
 31. Digital Employee 属于 Team，创建者离职不会自动导致其停止。
 32. Human / Workflow / AI / Integration 长期使用相同业务权限边界。
-33. 重要操作必须留下明确 Actor Audit。
+33. System Sync Service 是独立受限后台 Actor，不依赖最初绑定 Store 的用户持续存在。
+34. User Delegated / Digital Employee Job 在真正执行 Business Operation 时必须重新校验当前 Permission。
+35. 后台任务需要区分 Requested By 与 Execute As。
+36. Permission 撤销后尚未执行的动作不得继续，已经发生的动作保留历史。
+37. 重要操作必须留下明确 Actor Audit。
 
 ---
 
