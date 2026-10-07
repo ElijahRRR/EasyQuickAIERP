@@ -1,4 +1,4 @@
-# 核心对象业务信息需求（第二批）v0.1
+# 核心对象业务信息需求（第二批）v0.2
 
 > 状态：已确认  
 > 所属阶段：阶段 1 — ERP 地基  
@@ -150,6 +150,23 @@ Stock = OOS
 
 历史 Audit Evidence 仍保持当时事实。
 
+Order Audit Evidence 应尽可能绑定到当时实际观察到的 Source Offer Snapshot，例如：
+
+- ASIN；
+- 具体 Variant；
+- Seller / Seller ID；
+- Price；
+- Shipping；
+- Stock；
+- Fulfillment；
+- ETA / Promise Date；
+- Ship-to Context；
+- Observed Time。
+
+Seller Blacklist 判断针对当次候选 / 选中 Offer 的实际 Seller。
+
+不能因为 Product Source 仍然是同一个 ASIN，就忽略 Seller 已经变化。
+
 ### 3.2 多次审核 / 复查历史全部保留
 
 同一个 Order Line 可以出现：
@@ -264,8 +281,12 @@ Purchase 表示：
 - Source Platform；
 - Product Source Reference（如果来自已有 Source）；
 - 实际 ASIN / Product Identifier；
+- Parent / Child ASIN Relation（如适用）；
+- 实际 Variant / 关键规格；
 - 实际 Seller；
 - Seller ID；
+- 实际 Fulfillment；
+- Purchase 时承诺 / 预计 Delivery；
 - Source Order ID；
 - Purchase Quantity；
 - 实际商品单价；
@@ -327,9 +348,12 @@ Purchase 可以关联当前 Product Source，但历史采购不能依赖 Source 
 ```text
 Purchase Time:
 ASIN A
+Variant = Black / M / 1 Pack
 Seller X
+Fulfillment = FBA
 Price $22.35
 Qty 2
+Promise Delivery = Oct 10
 ```
 
 半年以后 Product Source 变化成：
@@ -427,8 +451,9 @@ Order Line
 2. Order 责任归属按下单时 Store Assignment 固定。
 3. Order Line 自身 Platform Snapshot 必须独立存在。
 4. Listing / Product 关联可以为空，不阻止订单入库。
-5. Order Audit 使用的 Source / Price / Stock / Delivery 等依据必须历史化。
-6. 同一 Order Line 的所有 Audit / Recheck 历史全部保留。
+5. Order Audit 使用的 Source / Offer Snapshot / Price / Stock / Seller / Fulfillment / Delivery 等依据必须历史化。
+6. Seller Blacklist 判断针对当次实际候选 / 选中的 Seller，而不是把 Seller 固化为 ASIN 身份。
+7. 同一 Order Line 的所有 Audit / Recheck 历史全部保留。
 7. Replacement / Lost 等再采购建立新的 Procurement Task。
 8. Procurement Task 与 Purchase 是不同对象。
 9. Purchase 保存真实交易金额：商品金额、Tax、Shipping、Actual Paid。
