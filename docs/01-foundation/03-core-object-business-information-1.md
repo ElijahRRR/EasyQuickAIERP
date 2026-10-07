@@ -1,4 +1,4 @@
-# 核心对象业务信息需求（第一批）v0.2
+# 核心对象业务信息需求（第一批）v0.3
 
 > 状态：已确认  
 > 所属阶段：阶段 1 — ERP 地基  
@@ -273,6 +273,30 @@ Product X
 
 当前关系与历史交易必须分开。
 
+### 3.6 Product ↔ Source 关联历史永久保留
+
+人工把 ASIN 关联到 Product，或后来将其解绑，都属于重要 Product Event。
+
+需要能够长期还原：
+
+- 哪个 Product；
+- 哪个 Source / ASIN；
+- 何时建立关联；
+- 由哪个 Actor 建立；
+- 何时解绑；
+- 由哪个 Actor 解绑；
+- 解绑原因（如有）。
+
+因此：
+
+```text
+Current Product-Source Relation
+≠
+Product-Source Relation History
+```
+
+当前关系可以失效 / 解绑，但“曾经关联过”的历史不能无痕删除。
+
 ---
 
 ## 4. Listing（销售实例）
@@ -400,9 +424,11 @@ Listing 是具体 Store / Platform 的销售实例。
 
 来源变化不会自动覆盖已发布 Listing。
 
-### Current Relation ≠ Historical Transaction
+### Current Relation ≠ Relation History ≠ Historical Transaction
 
-Product Source Relation 可以解绑，但历史 Purchase 永久保留。
+Product Source Relation 可以解绑，但绑定 / 解绑历史作为 Product Event 永久保留。
+
+历史 Purchase 同样永久保留，且不依赖当前 Relation 是否仍有效。
 
 ### Current Listing Value ≠ Operation History
 
