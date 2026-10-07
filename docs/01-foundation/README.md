@@ -22,9 +22,10 @@
 |---|---:|---|
 | [Foundation Architecture](./01-foundation-architecture.md) | v0.2 | Tenant、Internal ID、Domain Ownership、Platform Adapter、Business Operation、Authorization、Audit、Async Job |
 | [业务模块与数据归属图](./02-domain-data-ownership.md) | v0.1 | Store、商品、Listing、订单、采购、物流、售后、财务的数据 Owner 与跨模块协作边界 |
-| [核心对象业务信息需求（第一批）](./03-core-object-business-information-1.md) | v0.2 | Store、Product、Product Source、Listing 的业务信息、历史保留与数据设计分工 |
-| [核心对象业务信息需求（第二批）](./04-core-object-business-information-2.md) | v0.2 | Sales Order、Order Line、Order Audit、Procurement Task、Purchase 的业务信息与历史快照 |
+| [核心对象业务信息需求（第一批）](./03-core-object-business-information-1.md) | v0.3 | Store、Product、Product Source、Listing 的业务信息、历史保留与数据设计分工 |
+| [核心对象业务信息需求（第二批）](./04-core-object-business-information-2.md) | v0.3 | Sales Order、Order Line、Order Audit、Procurement Task、Purchase 的业务信息与历史快照 |
 | [核心对象业务信息需求（第三批）](./05-core-object-business-information-3.md) | v0.1 | Platform Shipment、Tracking、Return、Refund、Settlement Entry、Settlement Period / Payout 的业务信息与历史保留 |
+| [业务对象关系与开发交接约束图](./06-business-object-relations-handoff-constraints.md) | v0.1 | 核心对象基数、可空关系、历史保留、禁止级联删除、Job/权限、Platform Fact 与 ERP Decision 开发约束 |
 
 ## 3. Foundation Architecture 核心原则
 
@@ -65,17 +66,18 @@ System Sync ≠ User Delegation
 
 ## 4. 下一步
 
-> **业务对象关系与开发交接约束**
+> **开发侧 PostgreSQL Schema 设计与技术评审**
 
-核心对象业务信息需求已经完成三批确认。
+阶段 1 当前已经完成核心业务对象的上层关系与开发交接约束。
 
-下一步将这些业务对象整理为开发可直接使用的逻辑关系和约束，明确：
+下一步由开发人员基于本目录和阶段 0 Baseline 输出第一版 PostgreSQL Logical / Physical Schema。
 
-- 对象之间的一对一 / 一对多关系；
-- 哪些关联允许为空；
-- 哪些历史不能删除；
-- 哪些数据只能追加不能覆盖；
-- 哪些重要变化必须保留 Operation / Audit History；
-- Platform Fact 与 ERP Decision 的来源边界。
+业务侧不逐字段决定数据库实现；后续评审重点检查：
 
-完成后即可进入开发人员的 PostgreSQL Schema 设计与技术评审。
+- Schema 是否违反已确认对象关系；
+- 是否错误设置必填 / 唯一关系；
+- 是否存在危险 Cascade Delete；
+- 是否丢失历史快照 / Rule Version / Evidence；
+- 是否把 Current Value 与 Historical Fact 混为一体；
+- 是否把 Platform Fact 与 ERP Decision 混为一个状态；
+- 是否满足 Tenant、Authorization、Audit、Job 等 Foundation 边界。
