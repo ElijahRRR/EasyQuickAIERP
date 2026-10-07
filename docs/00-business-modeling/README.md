@@ -126,7 +126,7 @@ AI、Workflow、前端人工操作最终应复用相同的 ERP Business Operatio
 | 文档 | 当前版本 | 内容 |
 |---|---:|---|
 | [商品生命周期](./01-product-lifecycle.md) | v0.6 | 商品发现、团队商品池、审核、平台、店铺分配、多来源、资料准备、在线经营与退出 |
-| [Listing 生命周期](./02-listing-lifecycle.md) | v0.2 | Listing Draft、Listing 身份、提交状态、平台状态、库存归零、Retire、Delete、重新上架 |
+| [Listing 生命周期](./02-listing-lifecycle.md) | v0.3 | Listing Draft、Listing 身份、提交状态、平台状态、库存归零、Retire、Delete、重新上架 |
 | [Platform Error Management](./03-platform-error-management.md) | v0.2 | 首次上架失败与 Unpublished、错误分类、根因、团队处理策略、自动修复边界 |
 | [订单生命周期](./04-order-lifecycle.md) | v0.2 | 订单同步、订单审核、采购、物流、Delivered、售后、对账、利润和最终闭环 |
 | [采购生命周期](./05-procurement-lifecycle.md) | v0.3 | 采购任务、拆单采购、多来源、采购限价、实际成本、外部采购结算和采购/物流边界 |
