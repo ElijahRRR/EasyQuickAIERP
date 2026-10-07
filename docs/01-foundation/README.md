@@ -21,7 +21,7 @@
 | 文档 | 版本 | 内容 |
 |---|---:|---|
 | [Foundation Architecture](./01-foundation-architecture.md) | v0.2 | Tenant、Internal ID、Domain Ownership、Platform Adapter、Business Operation、Authorization、Audit、Async Job |
-| [业务模块与数据归属图](./02-domain-data-ownership.md) | v0.1 | Store、商品、Listing、订单、采购、物流、售后、财务的数据 Owner 与跨模块协作边界 |
+| [业务模块与数据归属图](./02-domain-data-ownership.md) | v0.2 | Store、商品、Listing、订单、采购、物流、售后、财务的数据 Owner 与跨模块协作边界 |
 | [核心对象业务信息需求（第一批）](./03-core-object-business-information-1.md) | v0.3 | Store、Product、Product Source、Listing 的业务信息、历史保留与数据设计分工 |
 | [核心对象业务信息需求（第二批）](./04-core-object-business-information-2.md) | v0.3 | Sales Order、Order Line、Order Audit、Procurement Task、Purchase 的业务信息与历史快照 |
 | [核心对象业务信息需求（第三批）](./05-core-object-business-information-3.md) | v0.1 | Platform Shipment、Tracking、Return、Refund、Settlement Entry、Settlement Period / Payout 的业务信息与历史保留 |
