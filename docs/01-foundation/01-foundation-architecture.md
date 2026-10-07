@@ -1,4 +1,4 @@
-# Foundation Architecture v0.1
+# Foundation Architecture v0.2
 
 > 状态：已确认  
 > 所属阶段：阶段 1 — ERP 地基  
@@ -487,6 +487,120 @@ Job 至少应能够关联：
 - PostgreSQL Queue；
 - 其他技术。
 
+### 24.1 Job 只是统一执行基础设施，不是业务记录
+
+必须区分：
+
+```text
+Job
+= 后台任务的执行过程
+
+Business Record
+= 真实业务事实
+```
+
+例如 Batch Inventory Update Job 可以记录：
+
+- Progress；
+- Retry；
+- Technical Error；
+- Started / Finished；
+- Trigger Actor。
+
+但每个 Listing 实际发生的：
+
+- Inventory Before / After；
+- Warehouse；
+- Operation Result；
+- Business Reason；
+
+仍应进入 Listing / Operation History。
+
+同样，Settlement Sync Job 不能替代 Settlement Entry / Settlement Period。
+
+因此：
+
+> 即使以后清理旧 Job Log，也不能因此删除或破坏正式业务历史。
+
+### 24.2 Job 需要区分 Requested By 与 Execute As
+
+异步任务至少要能表达：
+
+```text
+Requested By
+= 谁 / 什么机制让这个 Job 出现
+
+Execute As
+= 真正执行 Business Operation 时按哪个 Actor 的权限运行
+```
+
+例如：
+
+```text
+Human Batch Price Update
+Requested By = User Zhang
+Execute As   = User Zhang
+```
+
+```text
+Workflow Inventory Update
+Requested By = Workflow A
+Execute As   = Digital Employee A
+```
+
+```text
+Platform Order Sync
+Requested By = System Scheduler
+Execute As   = Platform Sync Service
+```
+
+### 24.3 异步任务执行时必须重新 Authorization
+
+入队时有权限：
+
+> 不代表真正执行时仍然有权限。
+
+对于 User Delegated Job / Digital Employee Job：
+
+1. 创建 / 入队时可以检查一次 Permission；
+2. Worker 真正执行 Business Operation 时必须按当前 Permission 重新检查；
+3. 长任务在产生每一批重要外部副作用前，应保证授权仍然有效。
+
+如果 Actor 被 Disable、Store Scope 被移除、Action Permission 被撤销：
+
+> 尚未执行的后续业务动作不得继续执行。
+
+已经成功提交到外部平台的历史动作不做假回滚。
+
+例如 1000 个 Listing 批量改价，已成功 300 个后权限被撤销：
+
+```text
+300 = 已执行，历史保留
+700 = 不再执行
+Job = Partial Success / Authorization Revoked
+```
+
+一次性的旧用户委托任务在后续重新获得权限时：
+
+> 不应自动恢复执行剩余动作，应重新确认 / 重新提交。
+
+### 24.4 System Sync Service 与用户委托操作分开
+
+系统同步身份用于获取和维护 Platform Fact，例如：
+
+- Order Sync；
+- Return Sync；
+- Settlement Sync；
+- Listing State Sync。
+
+它不依赖最初绑定 Store 的 Human User 长期存在。
+
+但 System Sync Service 的能力范围必须受限：
+
+> 能同步 Platform Fact，不因“System”身份自动获得 Refund、Cancel、Price Update、Take Down 等主动业务权限。
+
+主动高价值业务动作仍应由明确的 Human / Digital Actor 通过 Business Operation 和 Authorization 执行。
+
 ---
 
 ## 25. Foundation 请求执行主链
@@ -521,17 +635,23 @@ Audit
 异步动作：
 
 ```text
-Business Operation
+Business Operation / Scheduler
 ↓
 Create Async Job
 ↓
-Worker Executes
+Persist Requested By + Execute As
+↓
+Worker Starts
+↓
+Re-check Current Authorization（用户委托 / Digital Employee）
+↓
+Business Validation
 ↓
 Domain / Platform Adapter
 ↓
-Update Job Result
+Persist Business Record
 ↓
-Persist Business Result
+Update Job Result
 ↓
 Audit
 ```
@@ -562,13 +682,18 @@ Audit
 20. Human 与 Digital Actor 使用统一 Audit Model。
 21. Async Job 从阶段 1 就作为系统 Foundation。
 22. 各 Domain 不自行重复实现后台任务框架。
-23. 阶段 1 只确认架构边界，不提前锁死具体技术组件。
+23. Job 只记录执行过程，不能替代各 Domain 的正式 Business Record。
+24. Job 必须能够区分 Requested By 与 Execute As。
+25. 用户委托任务和 Digital Employee 任务在真正执行 Business Operation 时必须重新检查当前 Authorization。
+26. 权限撤销后，尚未执行的后续动作不得继续；已发生动作保留，长任务可以 Partial Success。
+27. System Sync Service 与用户委托操作是不同身份，只能在受限范围内同步 Platform Fact。
+28. 阶段 1 只确认架构边界，不提前锁死具体技术组件。
 
 ---
 
 ## 27. 当前暂不决定
 
-Foundation Architecture v0.1 暂时不决定：
+Foundation Architecture v0.2 暂时不决定：
 
 - PostgreSQL 具体表结构；
 - UUID / ULID / Snowflake 具体 ID 算法；
