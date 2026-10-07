@@ -128,15 +128,15 @@ AI、Workflow、前端人工操作最终应复用相同的 ERP Business Operatio
 | [商品生命周期](./01-product-lifecycle.md) | v0.6 | 商品发现、团队商品池、审核、平台、店铺分配、多来源、资料准备、在线经营与退出 |
 | [Listing 生命周期](./02-listing-lifecycle.md) | v0.3 | Listing Draft、Listing 身份、提交状态、平台状态、库存归零、Retire、Delete、重新上架 |
 | [Platform Error Management](./03-platform-error-management.md) | v0.2 | 首次上架失败与 Unpublished、错误分类、根因、团队处理策略、自动修复边界 |
-| [订单生命周期](./04-order-lifecycle.md) | v0.2 | 订单同步、订单审核、采购、物流、Delivered、售后、对账、利润和最终闭环 |
-| [采购生命周期](./05-procurement-lifecycle.md) | v0.3 | 采购任务、拆单采购、多来源、采购限价、实际成本、外部采购结算和采购/物流边界 |
+| [订单生命周期](./04-order-lifecycle.md) | v0.3 | 订单同步、订单审核、采购、物流、Delivered、售后、对账、利润和最终闭环 |
+| [采购生命周期](./05-procurement-lifecycle.md) | v0.4 | 采购任务、拆单采购、多来源、采购限价、实际成本、外部采购结算和采购/物流边界 |
 | [物流生命周期](./06-logistics-lifecycle.md) | v0.2 | Source Shipment、Platform Shipment、Tracking、可观察范围、Delivered、Delay/Lost 与物流/采购解耦 |
 | [售后生命周期](./07-after-sales-lifecycle.md) | v0.3 | 平台售后数据、Return/Refund、待处理售后、采购侧独立处置、估算财务影响与对账边界 |
 | [对账与利润生命周期](./08-reconciliation-profit-lifecycle.md) | v0.1 | Order Line 级预计利润、实际采购成本、跨账期 Settlement、Current Reconciled Profit 与 Store Payout |
 | [店铺生命周期](./09-store-lifecycle.md) | v0.3 | Store 平台身份、三类独立状态、连接关系、经营配置、解绑与历史负责人/运营组归属 |
 | [Team / User / Permission / Organization](./10-team-user-permission-organization.md) | v0.3 | Team 隔离、Group、Store Assignment、Platform/Store/Function/Action 权限、Role Template 与 Digital Employee |
 | [Risk Intelligence / Blacklist](./11-risk-intelligence-blacklist.md) | v0.2 | Brand / Product / Seller 风险、System Public / Team Private / Whitelist 优先级与 Workflow 边界 |
-| [阶段 0 收口审查](./12-stage-0-closure-review.md) | v1.0 | 统一修订旧结论、确认阶段 0 核心不变量并正式关闭 Baseline v1 |
+| [阶段 0 收口审查](./12-stage-0-closure-review.md) | v1.1 | 统一修订旧结论、确认阶段 0 核心不变量并正式关闭 Baseline v1 |
 
 ---
 
