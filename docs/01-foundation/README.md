@@ -24,6 +24,7 @@
 | [业务模块与数据归属图](./02-domain-data-ownership.md) | v0.1 | Store、商品、Listing、订单、采购、物流、售后、财务的数据 Owner 与跨模块协作边界 |
 | [核心对象业务信息需求（第一批）](./03-core-object-business-information-1.md) | v0.1 | Store、Product、Product Source、Listing 的业务信息、历史保留与数据设计分工 |
 | [核心对象业务信息需求（第二批）](./04-core-object-business-information-2.md) | v0.1 | Sales Order、Order Line、Order Audit、Procurement Task、Purchase 的业务信息与历史快照 |
+| [核心对象业务信息需求（第三批）](./05-core-object-business-information-3.md) | v0.1 | Platform Shipment、Tracking、Return、Refund、Settlement Entry、Settlement Period / Payout 的业务信息与历史保留 |
 
 ## 3. Foundation Architecture 核心原则
 
@@ -54,15 +55,17 @@ Persist + Audit
 
 ## 4. 下一步
 
-> **核心对象业务信息需求（第三批）**
+> **业务对象关系与开发交接约束**
 
-下一批确认：
+核心对象业务信息需求已经完成三批确认。
 
-- Platform Shipment；
-- Tracking / Logistics Observation；
-- Return；
-- Refund；
-- Settlement Entry；
-- Settlement Period / Payout。
+下一步将这些业务对象整理为开发可直接使用的逻辑关系和约束，明确：
 
-仍然只确认业务信息、历史保留和对象关系，不设计数据库物理字段。
+- 对象之间的一对一 / 一对多关系；
+- 哪些关联允许为空；
+- 哪些历史不能删除；
+- 哪些数据只能追加不能覆盖；
+- 哪些重要变化必须保留 Operation / Audit History；
+- Platform Fact 与 ERP Decision 的来源边界。
+
+完成后即可进入开发人员的 PostgreSQL Schema 设计与技术评审。
