@@ -1,4 +1,4 @@
-# 核心对象业务信息需求（第二批）v0.2
+# 核心对象业务信息需求（第二批）v0.3
 
 > 状态：已确认  
 > 所属阶段：阶段 1 — ERP 地基  
@@ -163,6 +163,12 @@ Order Audit Evidence 应尽可能绑定到当时实际观察到的 Source Offer 
 - Ship-to Context；
 - Observed Time。
 
+每一次 Order Audit 还必须绑定：
+
+> **当时实际使用的 Team Order Audit Policy / Rule Version。**
+
+这样后续 Team 修改采购限价、等待天数、配送时效等规则后，仍能准确解释历史订单为什么在当时得到 Pass / Reject / Pending。
+
 Seller Blacklist 判断针对当次候选 / 选中 Offer 的实际 Seller。
 
 不能因为 Product Source 仍然是同一个 ASIN，就忽略 Seller 已经变化。
@@ -306,7 +312,43 @@ Purchase 表示：
 
 ---
 
-## 7. Purchase 保存真实金额，而不是继续使用预计系数
+## 7. ERP Purchase 与外部 Source Order ID 分开
+
+ERP Purchase 保持 Procurement Task / Sales Order Line 粒度。
+
+同一个 Amazon / Source Order ID 可以被多个 ERP Purchase 引用。
+
+例如一次 Amazon Checkout：
+
+```text
+Amazon Order 114-ABC
+├ 商品 A → Walmart Order Line A
+└ 商品 B → Walmart Order Line B
+```
+
+ERP 可以保存为：
+
+```text
+Purchase 001
+→ Procurement Task A
+→ Order Line A
+→ Source Order ID = 114-ABC
+
+Purchase 002
+→ Procurement Task B
+→ Order Line B
+→ Source Order ID = 114-ABC
+```
+
+因此：
+
+> Source Order ID 不是 ERP Purchase 的唯一业务身份，开发不得把它设计成“一条外部订单只能对应一条 ERP Purchase”的全局限制。
+
+这样 Order Line 级采购数量、成本和利润能够独立核算。
+
+---
+
+## 8. Purchase 保存真实金额，而不是继续使用预计系数
 
 订单采购前可以使用：
 
@@ -339,7 +381,7 @@ Actual Paid = $43.20
 
 ---
 
-## 8. Purchase Snapshot 必须永久保存
+## 9. Purchase Snapshot 必须永久保存
 
 Purchase 可以关联当前 Product Source，但历史采购不能依赖 Source 当前数据。
 
@@ -376,7 +418,7 @@ Price $22.35
 
 ---
 
-## 9. Purchase Cancel / Refund 不覆盖原始交易事实
+## 10. Purchase Cancel / Refund 不覆盖原始交易事实
 
 当前确认：
 
@@ -418,7 +460,7 @@ Original Paid
 
 ---
 
-## 10. 第二批对象关系
+## 11. 第二批对象关系
 
 ```text
 Sales Order
@@ -445,26 +487,28 @@ Order Line
 
 ---
 
-## 11. 当前确认原则
+## 12. 当前确认原则
 
 1. Customer / Shipping Data 按下单时快照永久保留。
 2. Order 责任归属按下单时 Store Assignment 固定。
 3. Order Line 自身 Platform Snapshot 必须独立存在。
 4. Listing / Product 关联可以为空，不阻止订单入库。
 5. Order Audit 使用的 Source / Offer Snapshot / Price / Stock / Seller / Fulfillment / Delivery 等依据必须历史化。
-6. Seller Blacklist 判断针对当次实际候选 / 选中的 Seller，而不是把 Seller 固化为 ASIN 身份。
-7. 同一 Order Line 的所有 Audit / Recheck 历史全部保留。
-7. Replacement / Lost 等再采购建立新的 Procurement Task。
-8. Procurement Task 与 Purchase 是不同对象。
-9. Purchase 保存真实交易金额：商品金额、Tax、Shipping、Actual Paid。
-10. Purchase Snapshot 永久保存，不随 Product Source 当前值变化。
-11. 临时采购 Source 可以没有 Product Source Reference。
-12. Purchase Cancel / Refund 不覆盖原始交易事实。
-13. Finance 可以计算净采购成本，但不能改写 Purchase 历史。
+6. 每次 Order Audit 必须绑定当时实际使用的 Team Order Audit Policy / Rule Version。
+7. Seller Blacklist 判断针对当次实际候选 / 选中的 Seller，而不是把 Seller 固化为 ASIN 身份。
+8. 同一 Order Line 的所有 Audit / Recheck 历史全部保留。
+9. Replacement / Lost 等再采购建立新的 Procurement Task。
+10. Procurement Task 与 Purchase 是不同对象。
+11. ERP Purchase 保持 Procurement Task / Order Line 粒度；多个 Purchase 可以共享同一个外部 Source Order ID。
+12. Purchase 保存真实交易金额：商品金额、Tax、Shipping、Actual Paid。
+13. Purchase Snapshot 永久保存，不随 Product Source 当前值变化。
+14. 临时采购 Source 可以没有 Product Source Reference。
+15. Purchase Cancel / Refund 不覆盖原始交易事实。
+16. Finance 可以计算净采购成本，但不能改写 Purchase 历史。
 
 ---
 
-## 12. 下一步
+## 13. 下一步
 
 下一批建议确认：
 
