@@ -23,6 +23,7 @@
 | [Foundation Architecture](./01-foundation-architecture.md) | v0.1 | Tenant、Internal ID、Domain Ownership、Platform Adapter、Business Operation、Authorization、Audit、Async Job |
 | [业务模块与数据归属图](./02-domain-data-ownership.md) | v0.1 | Store、商品、Listing、订单、采购、物流、售后、财务的数据 Owner 与跨模块协作边界 |
 | [核心对象业务信息需求（第一批）](./03-core-object-business-information-1.md) | v0.1 | Store、Product、Product Source、Listing 的业务信息、历史保留与数据设计分工 |
+| [核心对象业务信息需求（第二批）](./04-core-object-business-information-2.md) | v0.1 | Sales Order、Order Line、Order Audit、Procurement Task、Purchase 的业务信息与历史快照 |
 
 ## 3. Foundation Architecture 核心原则
 
@@ -53,15 +54,15 @@ Persist + Audit
 
 ## 4. 下一步
 
-> **核心对象业务信息需求（第二批）**
+> **核心对象业务信息需求（第三批）**
 
 下一批确认：
 
-- Sales Order；
-- Order Line；
-- Procurement Task；
-- Purchase。
+- Platform Shipment；
+- Tracking / Logistics Observation；
+- Return；
+- Refund；
+- Settlement Entry；
+- Settlement Period / Payout。
 
-仍然只确认业务上必须保存什么、什么需要保留历史、哪些关系可以为空。
-
-数据库物理实现继续由开发侧负责。
+仍然只确认业务信息、历史保留和对象关系，不设计数据库物理字段。
