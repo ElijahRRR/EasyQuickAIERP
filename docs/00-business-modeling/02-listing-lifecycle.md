@@ -1,4 +1,4 @@
-# Listing 生命周期业务模型 v0.2
+# Listing 生命周期业务模型 v0.3
 
 > 状态：已确认业务基线
 
@@ -27,6 +27,35 @@
 Listing Draft 用于承载某个 Product 面向某个平台准备的销售资料。
 
 后续可以不断被人工编辑、AI 补全、重新校验，并最终绑定到任意符合要求的 Store。
+
+### 2.1 Draft 与正式 Listing 使用同一个内部 Listing Identity
+
+当前正式确认：
+
+> Listing Draft 不是另一个临时对象；Draft → Formal Listing 保持同一个 ERP Listing Internal ID。
+
+例如：
+
+```text
+Listing ID = L001
+Platform = Walmart
+Store = 空
+State = Draft
+```
+
+后续确定 Store：
+
+```text
+Listing ID = L001
+Platform = Walmart
+Store = H006
+```
+
+仍然是同一条 ERP Listing。
+
+这样 AI Suggested、Human Edited、Final Listing Values、Validation、Submission 与 Operation History 可以保持连续。
+
+Draft 阶段 Store 可以为空，但真正进入可提交 / Submission 之前必须已经确定 Store。
 
 ---
 
@@ -385,22 +414,24 @@ Delete / Exit 后未来仍可能 Re-list。
 
 1. Platform 一旦确定即可创建 Listing Draft；
 2. Draft 不要求立即绑定 Store；
-3. 正式 Listing 最终属于具体 Platform + Store；
-4. SKU / UPC / GTIN 不是 ERP Listing 永久 ID；
-5. ERP Business State、Submission State、Platform State 必须分开；
-6. Submitted 不等于 Published；
-7. Feed Success 不等于全部 Item 成功；
-8. 首次上架失败和 Published 后 Unpublished 必须区分；
-9. Unpublished 不等于 ERP Product 退出；
-10. Inventory = 0 不等于 Pause / Retire / Delete；
-11. Manual Zero Inventory 不自动停止其他维护规则；
-12. Retire / Delete 是平台动作，不直接决定 ERP Product 生命周期；
-13. Delete 后允许未来 Re-list；
-14. 同 Store Re-list 可用旧 SKU 或新 SKU，不同 Store 创建新 SKU；
-15. 更换 SKU / UPC / GTIN 仍可保持同一 ERP Listing 业务连续性；
-16. 平台字段的具体可修改性由 Platform Capability Matrix 定义；
-17. Price / Inventory 属日常普通维护，其他 Listing 修改当前按较高风险处理；
-18. 高风险不等于必须人工审批。
-19. Platform Warehouse / Shipping Template 属于平台资源，不代表 ERP 拥有 Physical Warehouse Domain。
-20. Walmart Listing / Inventory 操作允许不显式指定 Warehouse，此时使用平台 Default Warehouse。
-21. Walmart Shipping Template 可显式指定；未指定时由平台根据最终 Warehouse 使用默认模板。
+3. Draft → Formal Listing 保持同一个 ERP Listing Internal ID；
+4. 真正进入可提交 / Submission 前必须确定 Store；
+5. 正式 Listing 最终属于具体 Platform + Store；
+6. SKU / UPC / GTIN 不是 ERP Listing 永久 ID；
+7. ERP Business State、Submission State、Platform State 必须分开；
+8. Submitted 不等于 Published；
+9. Feed Success 不等于全部 Item 成功；
+10. 首次上架失败和 Published 后 Unpublished 必须区分；
+11. Unpublished 不等于 ERP Product 退出；
+12. Inventory = 0 不等于 Pause / Retire / Delete；
+13. Manual Zero Inventory 不自动停止其他维护规则；
+14. Retire / Delete 是平台动作，不直接决定 ERP Product 生命周期；
+15. Delete 后允许未来 Re-list；
+16. 同 Store Re-list 可用旧 SKU 或新 SKU，不同 Store 创建新 SKU；
+17. 更换 SKU / UPC / GTIN 仍可保持同一 ERP Listing 业务连续性；
+18. 平台字段的具体可修改性由 Platform Capability Matrix 定义；
+19. Price / Inventory 属日常普通维护，其他 Listing 修改当前按较高风险处理；
+20. 高风险不等于必须人工审批。
+21. Platform Warehouse / Shipping Template 属于平台资源，不代表 ERP 拥有 Physical Warehouse Domain。
+22. Walmart Listing / Inventory 操作允许不显式指定 Warehouse，此时使用平台 Default Warehouse。
+23. Walmart Shipping Template 可显式指定；未指定时由平台根据最终 Warehouse 使用默认模板。
