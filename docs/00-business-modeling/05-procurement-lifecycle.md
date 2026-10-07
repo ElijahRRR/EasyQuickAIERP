@@ -1,4 +1,4 @@
-# 采购生命周期业务模型 v0.3
+# 采购生命周期业务模型 v0.4
 
 > 状态：已确认  
 > 所属阶段：ERP 阶段 0 — 业务建模
@@ -208,6 +208,27 @@ Seller
 
 二者不能默认绑定。
 
+### 11.1 Product Source、Offer Snapshot、Purchase 分开
+
+正式区分：
+
+```text
+Product Source
+= ASIN 级来源商品身份
+
+Source Offer Snapshot
+= 某个时间点的 Seller、Price、Stock、Fulfillment、Delivery 条件
+
+Purchase
+= 最终真实发生的采购交易
+```
+
+Seller / Price / Stock / ETA 的变化不创建新的 ASIN Source。
+
+但采购选择 Seller 和 Seller Blacklist 判断必须针对当次实际候选 / 选中的 Offer。
+
+Purchase 自身必须保存实际 ASIN / Variant、Seller、Fulfillment、Price、Quantity、Tax、Shipping、Actual Paid、Promise / Delivery 等历史快照。
+
 ## 12. 采购限价
 
 当前团队会根据订单情况设置 **Purchase Price Limit**。
@@ -271,14 +292,31 @@ Seller
 
 此时需要开始记录真实采购事实，例如：
 
-- Source；
-- Purchase Order Number；
+- Product Source Reference（如有）；
+- 实际 ASIN / Child ASIN / Variant；
+- 实际 Seller / Seller ID；
+- 实际 Fulfillment；
+- Source Order Number；
 - Quantity；
-- Actual Price；
-- Seller；
+- Product Amount；
+- Tax；
+- Shipping；
+- Actual Paid；
 - Order Time；
 - Payment Method；
-- 预计配送时间。
+- Promise / Estimated Delivery。
+
+### 17.1 外部 Source Order ID 不是 ERP Purchase 唯一身份
+
+ERP Purchase 保持 Procurement Task / Sales Order Line 粒度。
+
+一次 Amazon Checkout 可以同时采购多个商品，并分别履约多个 Walmart Order Line。
+
+因此：
+
+> 多个 ERP Purchase 可以共享同一个 Amazon / Source Order ID。
+
+开发不得把 Source Order ID 设计成“一条外部订单只能对应一个 ERP Purchase”的全局业务约束。
 
 ## 18. 已发货
 
@@ -600,31 +638,35 @@ ERP 需要持续判断 Procurement Task 的目标数量是否已经全部覆盖�
 8. Primary Source 优先，但不是唯一 Source。
 9. 主来源不可用时允许寻找临时替代来源。
 10. 临时采购 Source 不自动成为长期 Product Source。
-11. 采购来源主要按商品一致性、配送方式、库存、速度、价格、Seller 判断。
-12. Purchase Limit 属于团队经营策略。
-13. 超过限价通常不采购，但可以结合店铺经营情况进一步决定。
-14. 采购人员可以将无法采购的任务打回运营。
-15. 无法采购不自动等于取消销售订单。
-16. Purchase 正常状态为：待采购 → 已下单 → 已发货 → 已签收。
-17. 不设置“采购成功”状态。
-18. Source 显示 Shipped 后，Purchase 自身的采购执行动作可以视为基本完成。
-19. Source Shipped 不自动触发 Platform Shipment，也不形成固定 Sales Order 状态跳转。
-20. Purchase 可以继续追踪至 Delivered；Source Shipment 不可观察时允许保持 Unknown。
-21. 销售订单与采购订单关联但分别管理。
-22. 销售订单取消不强制同步取消采购。
-23. Purchase 异常后允许重新采购。
-24. 所有历史 Purchase 必须保留。
-25. 最终采购成本来源于实际 Purchase。
-26. 内部采购主要使用公司信用卡或虚拟卡。
-27. 内部采购不存在逐单请款流程。
-28. 外部采购团队采用周期性对账结算。
-29. 外部采购可以保存发货凭证。
-30. Purchase 状态和 External Settlement 状态必须分开。
-31. 当前团队的 Source 通常直接配送给最终客户。
-32. Procurement 不定义第三方 Platform Tracking 的生命周期。
-33. Source Tracking 与 Sales Platform Tracking 必须分开。
-34. Platform Shipment / Tracking / Delay / Lost 属于 Logistics Lifecycle，而不是 Procurement Lifecycle。
-35. Purchase 与 Platform Shipment 可以关联，但不存在 ERP 全局固定先后关系。
+11. Product Source、Source Offer Snapshot、Purchase 是三个不同层次。
+12. Seller Blacklist 与采购判断针对当次实际 Offer 的 Seller。
+13. Purchase 必须保存实际 ASIN / Variant、Seller、Fulfillment、金额和配送承诺等交易快照。
+14. 多个 ERP Purchase 可以共享同一个外部 Source Order ID。
+15. 采购来源主要按商品一致性、配送方式、库存、速度、价格、Seller 判断。
+16. Purchase Limit 属于团队经营策略。
+17. 超过限价通常不采购，但可以结合店铺经营情况进一步决定。
+18. 采购人员可以将无法采购的任务打回运营。
+19. 无法采购不自动等于取消销售订单。
+20. Purchase 正常状态为：待采购 → 已下单 → 已发货 → 已签收。
+21. 不设置“采购成功”状态。
+22. Source 显示 Shipped 后，Purchase 自身的采购执行动作可以视为基本完成。
+23. Source Shipped 不自动触发 Platform Shipment，也不形成固定 Sales Order 状态跳转。
+24. Purchase 可以继续追踪至 Delivered；Source Shipment 不可观察时允许保持 Unknown。
+25. 销售订单与采购订单关联但分别管理。
+26. 销售订单取消不强制同步取消采购。
+27. Purchase 异常后允许重新采购。
+28. 所有历史 Purchase 必须保留。
+29. 最终采购成本来源于实际 Purchase。
+30. 内部采购主要使用公司信用卡或虚拟卡。
+31. 内部采购不存在逐单请款流程。
+32. 外部采购团队采用周期性对账结算。
+33. 外部采购可以保存发货凭证。
+34. Purchase 状态和 External Settlement 状态必须分开。
+35. 当前团队的 Source 通常直接配送给最终客户。
+36. Procurement 不定义第三方 Platform Tracking 的生命周期。
+37. Source Tracking 与 Sales Platform Tracking 必须分开。
+38. Platform Shipment / Tracking / Delay / Lost 属于 Logistics Lifecycle，而不是 Procurement Lifecycle。
+39. Purchase 与 Platform Shipment 可以关联，但不存在 ERP 全局固定先后关系。
 
 ## 40. 采购生命周期建模结论
 
