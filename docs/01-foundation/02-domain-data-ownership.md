@@ -1,4 +1,4 @@
-# 业务模块与数据归属图 v0.1
+# 业务模块与数据归属图 v0.2
 
 > 状态：已确认  
 > 所属阶段：阶段 1 — ERP 地基  
@@ -28,6 +28,7 @@
 - Group；
 - Permission；
 - Digital Employee；
+- System Sync Service；
 - Credential / Secret 安全保存；
 - Actor / Audit；
 - Async Job。
@@ -59,20 +60,27 @@ Walmart Platform Warehouse / Shipping Template 属于平台资源引用，不是
 - Product；
 - Product Data；
 - Product Source；
+- Product ↔ Source Relation History；
+- Source Offer Snapshot；
 - Primary / Backup Source；
-- Product Audit。
+- Product Audit / Audit History。
 
-Product Source 表示当前来源状态，例如：
+需要明确区分：
 
-- ASIN；
-- Seller；
-- Price；
-- Stock；
-- Shipping；
-- Delivery；
-- Source Product Data。
+```text
+Product Source
+= 来源商品身份，例如 Amazon ASIN
 
-历史采购事实不回读当前 Product Source 作为历史成本。
+Source Offer Snapshot
+= 某个时间点的 Seller、Price、Stock、Fulfillment、Delivery 等采购条件
+
+Purchase
+= 最终真实发生的采购交易
+```
+
+Seller / Price / Stock / ETA 不构成 ASIN Source 的永久身份。
+
+历史 Order Audit / Purchase 不通过当前 Source 最新值反推过去事实。
 
 ---
 
@@ -90,7 +98,7 @@ Product Source 表示当前来源状态，例如：
 - Product / ASIN；
 - Amazon Seller。
 
-正式优先级：
+Blacklist Resolution 内部优先级：
 
 ```text
 Team Whitelist
@@ -100,7 +108,11 @@ Team Private Blacklist
 System Public Blacklist
 ```
 
-Risk 模块只提供风险判断，不直接修改 Product、Listing、Purchase。
+该优先级只用于黑名单判断。
+
+Team Whitelist 不能覆盖确认命中的 TRO、Target Platform 明确禁售等不可覆盖硬规则。
+
+Risk 模块只提供风险事实 / Effective Blacklist Result，不直接修改 Product、Listing、Purchase。
 
 ---
 
@@ -115,10 +127,11 @@ Listing 永久关联其来源 Product，但保存自己独立的最终发布资�
 - SKU / UPC / GTIN；
 - Price / Inventory；
 - Platform Resource References；
-- Submission；
+- Listing Validation；
+- Submission / Submission History；
 - Platform Listing State；
 - Platform Error；
-- Repair / Retry History。
+- Operation / Repair / Retry History。
 
 Product Source 数据变化不能自动改写已发布 Listing。
 
@@ -130,7 +143,9 @@ Product Source 数据变化不能自动改写已发布 Listing。
 
 - Sales Order；
 - Order Line；
-- Order Audit。
+- Order Audit；
+- Order Audit Evidence；
+- Team Order Audit Rule / Policy Version Reference。
 
 Order Line 必须保存平台下单当时的历史快照，例如：
 
@@ -158,15 +173,22 @@ Order Line 可以关联 Listing / Product，但这些关联不是订单入库的
 
 Purchase 可以关联 Product Source，但关联是可选的。
 
-无论是否关联已有 Product Source，Purchase 都必须保存当时真实采购数据，例如：
+无论是否关联已有 Product Source / Source Offer Snapshot，Purchase 都必须保存当时真实采购数据，例如：
 
 - ASIN / Product Identifier；
+- 具体 Variant；
 - Seller；
+- Fulfillment；
 - Quantity；
 - Actual Price；
+- Tax；
 - Shipping Cost；
+- Actual Paid；
+- Promise / Delivery；
 - Purchase Time；
 - Source Order ID。
+
+多个 ERP Purchase 可以共享同一个外部 Source Order ID；外部订单号不是 ERP Purchase 的永久唯一身份。
 
 历史 Purchase 不随当前 Product Source 变化。
 
@@ -253,6 +275,7 @@ Walmart / Amazon / eBay / ...
 ```text
 系统基础
 ├ Team / User / Group / Permission
+├ Digital Employee / System Sync Service
 ├ Credential / Secret
 ├ Actor / Audit
 └ Async Job
@@ -266,7 +289,9 @@ Store
 商品
 ├ Product
 ├ Product Source
-└ Product Audit
+├ Product-Source Relation History
+├ Source Offer Snapshot
+└ Product Audit History
 
 风险
 ├ System Public Blacklist
@@ -276,13 +301,15 @@ Store
 Listing
 ├ Listing
 ├ Final Listing Data
-├ Submission
+├ Validation
+├ Submission History
+├ Operation History
 └ Platform Error
 
 订单
 ├ Sales Order
 ├ Order Line
-└ Order Audit
+└ Order Audit History / Evidence / Rule Version
 
 采购
 ├ Procurement Task
@@ -313,33 +340,33 @@ Listing
 ## 14. 已确认原则
 
 1. Store API 敏感凭证由系统安全模块专门保存，Store 只引用凭证。
-2. Product 与 Product Source 属于同一商品模块。
-3. Listing 保存自己独立的最终发布资料，并持续关联 Product。
-4. Order Line 保存平台下单时快照；即使 Listing 删除或无法匹配，订单仍独立存在。
-5. Purchase 保存采购当时的真实快照，不能依赖 Product Source 当前数据恢复历史。
-6. 每个模块只直接维护自己拥有的数据。
-7. 利润统一由 Finance 模块计算。
-8. 模块之间通过正式业务动作或事实通知协作，不直接修改对方数据。
-9. Platform Adapter 统一承接外部 Marketplace API。
-10. 当前模块边界不等于微服务边界，也不要求独立数据库。
+2. Product、Product Source、Source Offer Snapshot 属于同一商品模块，但三者语义必须分开。
+3. Product ↔ Source 的绑定 / 解绑历史必须保留。
+4. Listing 保存自己独立的最终发布资料，并持续关联 Product。
+5. Order Line 保存平台下单时快照；即使 Listing 删除或无法匹配，订单仍独立存在。
+6. Product Audit / Order Audit 需要保存历史记录、证据与适用 Rule / Policy Version。
+7. Purchase 保存采购当时的真实快照，不能依赖 Product Source 当前数据恢复历史。
+8. 多个 ERP Purchase 可以共享同一个外部 Source Order ID。
+9. 每个模块只直接维护自己拥有的数据。
+10. 利润统一由 Finance 模块计算。
+11. 模块之间通过正式业务动作或事实通知协作，不直接修改对方数据。
+12. Job 是统一执行基础设施，不替代各业务模块的 Business Record。
+13. User Delegated / Digital Employee Job 真正执行时重新检查当前 Authorization。
+14. System Sync Service 与 User Delegation 分开，只在受限范围内维护 Platform Fact。
+15. Platform Adapter 统一承接外部 Marketplace API。
+16. 当前模块边界不等于微服务边界，也不要求独立数据库。
 
 ---
 
-## 15. 下一步
+## 15. 后续衔接
 
-下一步进入：
+本文件的数据归属结论已经继续展开到：
 
-> 核心对象与字段需求设计
+- 核心对象业务信息需求；
+- 业务对象关系与开发交接约束图。
 
-这里先确认“业务上必须保存什么信息”，再由开发人员设计：
+当前下一步已进入：
 
-- 数据库表；
-- 字段名称；
-- 数据类型；
-- 索引；
-- 外键；
-- 唯一约束；
-- JSON / 关系型拆分；
-- 迁移策略。
+> 开发侧 PostgreSQL Logical / Physical Schema 设计与技术评审。
 
-业务字段需求与物理数据库字段设计必须分层确认。
+数据库实现由开发人员负责，但不得违反本文件及后续关系约束。
