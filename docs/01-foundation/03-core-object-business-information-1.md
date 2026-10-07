@@ -1,4 +1,4 @@
-# 核心对象业务信息需求（第一批）v0.1
+# 核心对象业务信息需求（第一批）v0.2
 
 > 状态：已确认  
 > 所属阶段：阶段 1 — ERP 地基  
@@ -170,7 +170,64 @@ Seller Risk Check
 Purchase Decision
 ```
 
-### 3.2 一个 Product 可以关联多个 Amazon ASIN
+### 3.2 Source Offer Snapshot（来源报价快照）
+
+需要把“来源商品身份”和“某一时刻的卖家报价条件”分开。
+
+```text
+Product Source
+= ASIN 级来源商品身份
+
+Source Offer Snapshot
+= 某一时刻具体 Seller 的可购买条件
+```
+
+Offer Snapshot 至少需要能够还原当时：
+
+- ASIN；
+- Seller / Seller ID；
+- Price；
+- Shipping Cost；
+- Stock / Availability；
+- Fulfillment；
+- Promise / Estimated Delivery；
+- Ship-to Context（如目标 ZIP 会影响结果）；
+- Observed Time；
+- 其他影响采购判断的重要条件。
+
+Product Source 可以维护当前 / 最新 Offer Summary，但历史 Order Audit / Procurement 不能通过读取 Source 当前值来还原过去。
+
+Seller Blacklist 检查的是：
+
+> 当次候选 / 选中 Offer 的实际 Seller。
+
+不是把 Seller 固定成 ASIN 的永久属性。
+
+### 3.3 Amazon Parent / Child ASIN 与 Variant
+
+Amazon Source 需要能够表达变体关系。
+
+例如：
+
+```text
+Parent ASIN
+├ Child ASIN - Black / M
+├ Child ASIN - Black / L
+└ Child ASIN - Red / M
+```
+
+业务上需要能够知道：
+
+- Parent ASIN（如果存在）；
+- 实际可购买 Child ASIN；
+- Color；
+- Size；
+- Pack / Quantity；
+- 其他决定实际履约商品的 Variant Attributes。
+
+实际采购与订单履约应尽可能记录具体可购买 ASIN / Variant。
+
+### 3.4 一个 Product 可以关联多个 Amazon ASIN
 
 例如：
 
@@ -182,6 +239,8 @@ Product X
 ```
 
 表示这些来源被 Team 认为可以履约同一个 Product。
+
+这里的“可以履约同一个 Product”不仅表示标题或图片相似，还要求关键 Variant / Spec 与销售商品相符。
 
 但：
 
@@ -204,7 +263,7 @@ Product X
 - Procurement；
 - Customer Fulfillment。
 
-### 3.3 Product Source Relation 可以解绑
+### 3.5 Product Source Relation 可以解绑
 
 如果人工后来发现某个 ASIN 不是同一商品，可以从当前 Product 解绑。
 
@@ -323,11 +382,13 @@ Product 表示“这是什么商品”。
 
 Product Source 表示“从哪里获得 / 采购这个商品”。
 
-### Product Source ≠ Purchase
+### Product Source ≠ Source Offer Snapshot ≠ Purchase
 
-Product Source 保存当前来源状态。
+Product Source 保存 ASIN 级来源商品身份和当前关系。
 
-Purchase 保存当时真实交易事实。
+Source Offer Snapshot 保存某个时间点的 Seller、Price、Stock、Fulfillment、Delivery 等采购条件。
+
+Purchase 保存最终真实发生的交易事实。
 
 ### Product ≠ Listing
 
