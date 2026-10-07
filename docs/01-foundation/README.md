@@ -20,10 +20,10 @@
 
 | 文档 | 版本 | 内容 |
 |---|---:|---|
-| [Foundation Architecture](./01-foundation-architecture.md) | v0.1 | Tenant、Internal ID、Domain Ownership、Platform Adapter、Business Operation、Authorization、Audit、Async Job |
+| [Foundation Architecture](./01-foundation-architecture.md) | v0.2 | Tenant、Internal ID、Domain Ownership、Platform Adapter、Business Operation、Authorization、Audit、Async Job |
 | [业务模块与数据归属图](./02-domain-data-ownership.md) | v0.1 | Store、商品、Listing、订单、采购、物流、售后、财务的数据 Owner 与跨模块协作边界 |
-| [核心对象业务信息需求（第一批）](./03-core-object-business-information-1.md) | v0.1 | Store、Product、Product Source、Listing 的业务信息、历史保留与数据设计分工 |
-| [核心对象业务信息需求（第二批）](./04-core-object-business-information-2.md) | v0.1 | Sales Order、Order Line、Order Audit、Procurement Task、Purchase 的业务信息与历史快照 |
+| [核心对象业务信息需求（第一批）](./03-core-object-business-information-1.md) | v0.2 | Store、Product、Product Source、Listing 的业务信息、历史保留与数据设计分工 |
+| [核心对象业务信息需求（第二批）](./04-core-object-business-information-2.md) | v0.2 | Sales Order、Order Line、Order Audit、Procurement Task、Purchase 的业务信息与历史快照 |
 | [核心对象业务信息需求（第三批）](./05-core-object-business-information-3.md) | v0.1 | Platform Shipment、Tracking、Return、Refund、Settlement Entry、Settlement Period / Payout 的业务信息与历史保留 |
 
 ## 3. Foundation Architecture 核心原则
@@ -52,6 +52,16 @@ Persist + Audit
 ```
 
 异步任务通过统一 Job Foundation 执行。
+
+其中必须保持：
+
+```text
+Job ≠ Business Record
+Queued Permission ≠ Execution Permission
+System Sync ≠ User Delegation
+```
+
+用户委托 / Digital Employee 的后台任务在真正产生业务副作用时重新校验当前权限；系统同步身份只在受限范围内维护 Platform Fact。
 
 ## 4. 下一步
 
