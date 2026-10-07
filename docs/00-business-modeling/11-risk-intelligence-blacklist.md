@@ -1,4 +1,4 @@
-# Risk Intelligence / Blacklist Model v0.1
+# Risk Intelligence / Blacklist Model v0.2
 
 > 状态：已确认  
 > 所属阶段：ERP 阶段 0 — 业务建模
@@ -170,11 +170,13 @@ Team A 的私有黑名单默认不等于 Team B 的私有黑名单。
 
 ## 8. Team Whitelist
 
-每个 Team 还可以维护自己的：
+每个 Team 可以维护自己的：
 
 > **Team Whitelist**
 
-Whitelist 用于覆盖黑名单判断。
+但 Whitelist 的作用范围必须明确：
+
+> **Whitelist 只覆盖 Blacklist Resolution，不覆盖不可豁免的法律 / 平台硬规则。**
 
 例如：
 
@@ -186,15 +188,26 @@ Team X Whitelist:
 Brand A = Allowed
 ```
 
-则对于 Team X：
+如果该记录只是系统风险经验 / 普通黑名单：
 
-> Brand A 不按系统公共黑名单命中处理。
+> 对 Team X 不按这条 Blacklist Hit 拒绝。
+
+但是，如果当前 Product Audit 另外确认：
+
+- 命中 TRO；
+- 命中目标平台明确禁售 / 禁止销售规则；
+
+则仍然必须按硬规则 Reject。
+
+因此：
+
+> Whitelist 可以覆盖“名单结论”，不能把已确认的不可覆盖硬风险变成 Allowed。
 
 ---
 
-## 9. 黑白名单优先级
+## 9. Blacklist Resolution 优先级
 
-当前正式确认：
+原优先级：
 
 ```text
 Team Whitelist
@@ -204,11 +217,30 @@ Team Private Blacklist
 System Public Blacklist
 ```
 
+继续成立，但其含义限定为：
+
+> **Blacklist Resolution Priority**
+
+即只解决“对于当前 Team，这条 Blacklist 是否有效命中”。
+
+执行顺序概念上应为：
+
+```text
+第一层：不可覆盖硬规则
+        ↓
+第二层：Team Whitelist / Team Private Blacklist / System Public Blacklist
+        ↓
+第三层：其他辅助风险
+        ↓
+Product Audit Decision
+```
+
 因此：
 
-1. Team 明确加入 Whitelist 的对象，对该 Team 最高优先级放行；
-2. 如果没有 Whitelist Override，再检查 Team Private Blacklist；
-3. 如果 Team 私有层没有决定，再检查 System Public Blacklist。
+1. 先判断不可覆盖硬规则；
+2. 在 Blacklist 层内，Team Whitelist 可以覆盖 Team Private / System Public Blacklist；
+3. 如果没有 Whitelist Override，再依次判断 Team Private Blacklist、System Public Blacklist；
+4. 其他辅助风险按 Team Policy 参与最终判断。
 
 风险判断必须带 Team Context。
 
@@ -218,7 +250,22 @@ System Public Blacklist
 
 而应该问：
 
-> “对于 Team X，Brand A 当前的 Effective Risk Result 是什么？”
+> “对于 Team X，Brand A 当前的 Effective Blacklist Result 是什么？”
+
+### 9.1 当前不可被 Whitelist 覆盖的硬规则
+
+当前至少包括：
+
+- 确认命中的 TRO；
+- Target Platform 明确禁止销售 / 禁售的商品规则。
+
+例如 System Public Blacklist Entry 的 Source 标记为 TRO，同时 Team 对该 Brand 设置 Whitelist：
+
+- Blacklist 层可以得到 Whitelist Override；
+- 但 Product Audit 仍必须独立执行当前 TRO Hard Rule；
+- 如果当前证据确认 TRO 仍命中，最终仍为 Reject。
+
+这样最终结果不依赖代码“先判断 Whitelist 还是先判断 TRO”的偶然执行顺序。
 
 ---
 
@@ -342,8 +389,9 @@ Amazon Seller Blacklist 主要影响：
 7. System Public Blacklist 可按 Team 开放，也可以成为付费服务。
 8. Team 可以拥有 Team Private Blacklist。
 9. Team 可以拥有 Team Whitelist。
-10. 正式优先级为 Team Whitelist > Team Private Blacklist > System Public Blacklist。
-11. 风险判断必须结合具体 Team。
+10. Team Whitelist > Team Private Blacklist > System Public Blacklist 仅表示 Blacklist Resolution Priority。
+11. Whitelist 不能覆盖确认命中的 TRO 或 Target Platform 明确禁售等不可覆盖硬规则。
+12. 风险判断必须结合具体 Team。
 12. Audit 可以查询 Blacklist，但 Audit Reject 不自动写入 Blacklist。
 13. 当前团队上架前命中有效黑名单时，Workflow 直接 Reject。
 14. 在线商品命中新风险时，当前默认先产生运营待处理建议。
