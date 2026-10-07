@@ -1,7 +1,8 @@
-# 阶段 0 收口审查 — Business Model Closure Review v1.0
+# 阶段 0 收口审查 — Business Model Closure Review v1.1
 
 > 状态：已收口（Baseline v1）  
-> 日期：2026-10-01  
+> 初次收口：2026-10-01  
+> 最近修订：2026-10-07  
 > 范围：`docs/00-business-modeling`
 
 ## 1. 收口目标
@@ -298,7 +299,7 @@ Risk Intelligence 正式成为横向风险资料层。
 - Product / ASIN；
 - Amazon Seller。
 
-正式优先级：
+Blacklist Resolution 内部优先级：
 
 ```text
 Team Whitelist
@@ -308,11 +309,31 @@ Team Private Blacklist
 System Public Blacklist
 ```
 
+该优先级只解决黑名单判断，不覆盖确认命中的 TRO、Target Platform 明确禁售等不可覆盖硬规则。
+
+因此：
+
+> Whitelist 可以覆盖名单结论，但不能覆盖法律 / 平台硬规则事实。
+
 Audit 可以查询 Blacklist，但：
 
 > Audit Reject 不自动创建 Blacklist Entry。
 
 在线商品命中新风险后，当前团队默认先产生运营建议；自动下架属于 Team Workflow。
+
+### 3.11 阶段 1 前置细化不改变阶段 0 业务本质
+
+进入阶段 1 后，以下原有业务概念被进一步精确化，并回写对应业务模型：
+
+- Product Audit 绑定 Target Platform、Content Version、Evidence、Rule / Policy Version；
+- Audit Result 与当前 Validity 分开，历史结果不被覆盖；
+- Product Source 与 Source Offer Snapshot 分开；
+- Amazon Parent / Child ASIN 与 Variant 需要能够表达；
+- Listing Draft → Formal Listing 保持同一 ERP Listing Identity；
+- Order Audit 保存当时 Offer Evidence 和 Team Order Audit Rule Version；
+- 多个 ERP Purchase 可以共享同一个外部 Source Order ID。
+
+这些属于对既有业务语义的精确化，不把阶段 0 重新打开成新的技术设计阶段。
 
 ---
 
@@ -326,11 +347,13 @@ Product 是团队经营商品资产。
 
 Listing 是 Product 在某 Platform / Store 的销售实例。
 
-### Product Source ≠ Actual Procurement Source
+### Product Source ≠ Source Offer Snapshot ≠ Purchase
 
-商品主来源只是默认来源。
+Product Source 表示来源商品身份。
 
-历史订单成本使用真实 Purchase Fact。
+Source Offer Snapshot 表示某个时间点的 Seller、Price、Stock、Fulfillment、Delivery 等采购条件。
+
+Purchase 表示最终真实发生的采购交易；历史订单成本使用真实 Purchase Fact。
 
 ### Sales Order ≠ Purchase
 
