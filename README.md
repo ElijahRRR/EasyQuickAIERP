@@ -39,7 +39,8 @@ EasyQuickAIERP 是一个面向多团队、多销售平台、多商品来源的�
 - [阶段 0 — 业务建模 Baseline v1](./docs/00-business-modeling/README.md)
 - [阶段 0 收口审查](./docs/00-business-modeling/12-stage-0-closure-review.md)
 - [阶段 1 — ERP 地基索引](./docs/01-foundation/README.md)
-- [Foundation Architecture v0.1](./docs/01-foundation/01-foundation-architecture.md)
+- [Foundation Architecture v0.2](./docs/01-foundation/01-foundation-architecture.md)
+- [业务对象关系与开发交接约束图 v0.1](./docs/01-foundation/06-business-object-relations-handoff-constraints.md)
 
 ## 文档原则
 
@@ -55,6 +56,6 @@ EasyQuickAIERP 是一个面向多团队、多销售平台、多商品来源的�
 
 继续阶段 1：
 
-> **Domain & Data Ownership Map**
+> **开发侧 PostgreSQL Schema 设计与技术评审**
 
-先明确 Domain 边界、核心对象、数据 Owner 和跨 Domain 协作，再进入数据库 Schema 与模块结构设计。
+开发人员基于阶段 0 Business Baseline 与阶段 1 Foundation / Data Ownership / Core Object / Handoff Constraints 输出第一版 Logical / Physical Schema；业务侧重点评审是否违反已确认业务关系和历史约束。
