@@ -1275,19 +1275,452 @@ System Sync Service 不能因为负责同步订单，就获得所有订单写权
 
 ---
 
-## 21. 下一步
+## 21. Settlement / Reports / Performance / Store Platform State
+
+## 21.1 Recon Report 是数据来源，不是 ERP 财务对象
+
+正式确认：
+
+> **Walmart Recon Report 只是外部数据来源；Settlement Period + Settlement Entry 才是 ERP 正式财务业务记录。**
+
+因此：
+
+~~~text
+Walmart Recon Report
+↓ Parse / Import
+Settlement Period
++
+0..N Settlement Entry
+~~~
+
+Walmart 后续如果改变 Report Format / Version，不应迫使 Finance Domain 改变业务对象语义。
+
+Settlement Entry 仍需要支持：
+
+- Order Line 可匹配；
+- Order Line 无法匹配；
+- Store-level Fee；
+- Adjustment；
+- Period Charge；
+- Refund / Commission / Tax 等平台财务明细。
+
+无法匹配 Order Line 的 Entry 仍必须保留。
+
+---
+
+## 21.2 Payment Statement 是资金 / 付款周期 Snapshot
+
+Payment Statement 表示：
+
+> 某个时间点 Walmart 返回的账户资金 / 付款周期观察结果。
+
+它可以用于：
+
+- 当前预计回款查看；
+- 付款周期状态；
+- 现金流观察；
+- Store Financial State 展示。
+
+但：
+
+> **Payment Statement Snapshot 不能按每天数值累加计算 Cumulative Payout。**
+
+正式累计 Payout 仍然使用：
+
+~~~text
+Cumulative Payout
+=
+Σ Settlement Period.Total Payable
+~~~
+
+因此必须区分：
+
+~~~text
+Payment Statement Snapshot
+≠
+Settlement Period
+≠
+Settlement Entry
+≠
+Cumulative Payout
+~~~
+
+---
+
+## 21.3 Platform Report Request 与 ERP Job 分开
+
+ERP 可以主动向 Walmart 创建 Report Request。
+
+需要区分：
+
+~~~text
+ERP Job
+≠
+Walmart Platform Report Request
+≠
+Downloaded Raw Report
+≠
+Parsed Business Record
+~~~
+
+例如：
+
+~~~text
+ERP Settlement Sync Job
+↓
+Walmart Report Request
+↓
+Report Ready
+↓
+Download Raw Report
+↓
+Parse
+↓
+Settlement Period / Settlement Entry
+~~~
+
+ERP Job 后续清理不能删除已经形成的正式财务业务数据。
+
+### Platform Report Request 需要保存的业务信息
+
+至少包括：
+
+- Store；
+- Report Type；
+- Report Version；
+- Requested By；
+- Requested Time；
+- Walmart Request ID；
+- Platform Request Status；
+- Ready Time；
+- Download Time；
+- Parse Result；
+- Related Import / Business Result；
+- Error / Failure Reason。
+
+Raw Report 文件受 Data Retention Policy 管理，可以比解析后的正式 Business Fact 更早 Archive / Purge。
+
+---
+
+## 21.4 Walmart Report Scheduler 当前不进入 ERP V1
+
+当前明确收缩范围：
+
+> **EasyQuickAIERP V1 不需要管理 Walmart Report Scheduler。**
+
+ERP 当前只需要管理：
+
+~~~text
+ERP / Human / Workflow
+→ Create Walmart Report Request
+→ Poll / Receive Status
+→ Download
+→ Parse
+→ Persist Business Result
+~~~
+
+不为“以后可能会用”提前增加：
+
+- Walmart Report Schedule Object；
+- Schedule CRUD；
+- Scheduler 与 ERP Workflow 双层调度关系。
+
+如果未来出现真实业务需要，再扩展 Platform Capability。
+
+因此：
+
+> **当前不建模 Walmart Report Scheduler。**
+
+---
+
+## 21.5 Performance 使用通用 Metric 模型
+
+Store Performance 不把当前 Walmart 某一组固定指标永久写死成数据库核心结构。
+
+正式采用概念：
+
+~~~text
+Performance Metric Definition
++
+Performance Observation
++
+Problem Detail
+~~~
+
+### Metric Definition
+
+表示：
+
+- Metric Key；
+- Platform Name；
+- Display Name；
+- Unit；
+- Threshold / Target（如平台可获取）；
+- Effective Version；
+- Deprecated / Active；
+- Platform Metadata。
+
+### Performance Observation
+
+表示某次真实平台观察，例如：
+
+~~~text
+Store H006
+Metric = VTR
+Observed At = T
+Period / Window = X
+Value = 99.2%
+~~~
+
+### Problem Detail
+
+表示导致某个指标异常的具体平台明细，例如：
+
+- affected Order；
+- affected Order Line；
+- issue type；
+- platform reason；
+- observed time。
+
+因此：
+
+~~~text
+Performance Summary
+≠
+Performance Problem Detail
+~~~
+
+ERP 可以从 Summary 下钻到具体问题订单 / 明细。
+
+---
+
+## 21.6 Performance 不能自动推导 Store Platform State
+
+低 OTD、低 VTR、高 Cancellation、Return 等指标只表示：
+
+> Store 当前绩效表现。
+
+不能自动推导：
+
+~~~text
+Store = SUSPENDED
+或
+Store = TERMINATED
+~~~
+
+正式保持：
+
+~~~text
+Seller Performance
+≠
+Platform State
+~~~
+
+只有明确的 Walmart Platform Evidence 才能形成 Platform State Observation。
+
+---
+
+## 21.7 Store 的五类状态 / 观测必须分开
+
+正式确认以下五类数据不能压缩成一个万能 Store Status：
+
+### 1. Platform State
+
+回答：
+
+> 这个 Store 当前在 Walmart 平台上的账号业务状态是什么？
+
+例如平台明确可观察到的：
+
+- Active；
+- Suspended；
+- Terminated；
+- Restricted；
+- Unknown。
+
+具体平台枚举后续以实际 Walmart Capability 为准。
+
+### 2. Connection Health
+
+回答：
+
+> ERP 当前能否正常连接并调用 Walmart API？
+
+例如：
+
+- Healthy；
+- Credential Invalid；
+- Token Failed；
+- Permission / Scope Missing；
+- Proxy Failed；
+- API Unreachable；
+- Unknown。
+
+### 3. Seller Performance
+
+回答：
+
+> Store 当前经营绩效如何？
+
+例如 OTD / VTR / Cancellation / Return 等 Metric Observation。
+
+### 4. Seller Program Status
+
+回答：
+
+> Store 当前参加 Walmart 平台项目 / 等级 / Badge 的状态是什么？
+
+例如 Pro Seller / Badge / Incentive 等未来实际支持的数据。
+
+### 5. Financial State
+
+回答：
+
+> Store 当前资金 / 账期 / 回款处于什么状态？
+
+例如：
+
+- Payment Statement Snapshot；
+- Current Settlement Period；
+- Current Payable Observation；
+- 其他财务观察值。
+
+因此：
+
+~~~text
+Platform State
+≠
+Connection Health
+≠
+Seller Performance
+≠
+Seller Program Status
+≠
+Financial State
+~~~
+
+---
+
+## 21.8 Platform State 必须保存 Evidence Source
+
+Platform State 不能只保存一个当前字符串。
+
+每次重要状态观察至少需要能够知道：
+
+- Store；
+- Observed Platform State；
+- Evidence Source；
+- Observed Time；
+- Raw / Reference Evidence（如适用）；
+- Confidence / Confirmed Source（如需要）。
+
+Evidence Source 可以来自：
+
+- Walmart API；
+- Seller Center Observation；
+- Human Confirmed；
+- 其他明确可信的平台来源。
+
+例如：
+
+~~~text
+State = SUSPENDED
+Evidence Source = Seller Center Observation
+Observed At = T
+~~~
+
+而不能：
+
+~~~text
+API 401
+↓
+推断 SUSPENDED
+~~~
+
+---
+
+## 21.9 Authentication / Connection Failure 不得推断平台封禁状态
+
+正式确认：
+
+~~~text
+401 / 403
+Credential Invalid
+Token Failed
+Scope Missing
+Proxy Failure
+API Timeout
+~~~
+
+这些首先属于：
+
+> Connection Health
+
+不能自动推导：
+
+- Suspended；
+- Terminated；
+- Restricted。
+
+如果平台账号状态无法明确获取，则 Platform State 保持 Unknown / Last Confirmed，而不是猜测。
+
+---
+
+## 21.10 Platform State History
+
+Store 当前 Platform State 可以更新。
+
+但重要历史观察应保留，例如：
+
+~~~text
+Oct 1  ACTIVE
+Oct 8  SUSPENDED
+Oct 10 ACTIVE
+~~~
+
+这样才能解释：
+
+- 销售中断；
+- Listing 异常；
+- Order 下降；
+- 财务变化；
+- 运营责任区间。
+
+历史按 Data Retention Policy 管理。
+
+---
+
+## 22. 当前新增确认原则
+
+46. Recon Report 是外部数据来源；Settlement Period / Settlement Entry 才是 ERP 正式财务记录。
+47. Payment Statement 保存为资金 / 付款周期 Snapshot，不通过每日 Snapshot 累加计算 Payout。
+48. Cumulative Payout 仍来自正式 Settlement Period Total Payable 的累计。
+49. ERP Job、Walmart Report Request、Raw Report、Parsed Business Record 四者分开。
+50. ERP V1 只管理 ERP 主动发起的 Walmart Report Request，不管理 Walmart Report Scheduler。
+51. Raw Report 可以按 Retention Policy 比解析后的核心业务记录更早归档 / 清理。
+52. Seller Performance 使用 Metric Definition + Observation + Problem Detail 的通用模型。
+53. 当前 Walmart 绩效指标不硬编码成永久数据库结构。
+54. Performance 不能自动推导 Store Suspended / Terminated。
+55. Platform State、Connection Health、Seller Performance、Seller Program Status、Financial State 五类完全分开。
+56. Platform State Observation 必须带 Evidence Source + Observed Time。
+57. 401 / 403、Credential / Token / Proxy 等连接异常不能推断 Store Suspended。
+58. Store Platform State 的重要历史观察需要保留。
+
+---
+
+## 23. 下一步
 
 下一轮建议继续 Walmart Capability：
 
-> **Settlement / Reports / Performance / Store Platform State**
+> **Platform Error / Rate Limit / Retry / Webhook / Capability Matrix 收口**
 
 重点确认：
 
-- Settlement Period 与 Settlement Entry；
-- Payment Statement / Recon Report；
-- Pending Payout 与正式 Payout；
-- Report Request / Download；
-- Performance / Insights；
-- Store Platform State 与 Connection Health；
-- 哪些报表是正式业务事实，哪些只是观测 / 辅助数据；
-- 报表异步生成与 Job / Platform Report Request 的关系。
+- Walmart Error 原文与 Normalized Error；
+- 业务错误 vs Connection Error vs Platform System Error；
+- Rate Limit；
+- Retry；
+- 写操作幂等 / 防重；
+- Webhook 是否进入 V1；
+- Capability Matrix 如何描述 Read / Write / Async / Verification；
+- Walmart Capability Specification v0.1 收口条件。
