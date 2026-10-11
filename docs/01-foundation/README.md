@@ -26,6 +26,8 @@
 | [核心对象业务信息需求（第二批）](./04-core-object-business-information-2.md) | v0.3 | Sales Order、Order Line、Order Audit、Procurement Task、Purchase 的业务信息与历史快照 |
 | [核心对象业务信息需求（第三批）](./05-core-object-business-information-3.md) | v0.1 | Platform Shipment、Tracking、Return、Refund、Settlement Entry、Settlement Period / Payout 的业务信息与历史保留 |
 | [业务对象关系与开发交接约束图](./06-business-object-relations-handoff-constraints.md) | v0.1 | 核心对象基数、可空关系、历史保留、禁止级联删除、Job/权限、Platform Fact 与 ERP Decision 开发约束 |
+| [Data Retention Policy](./07-data-retention-policy.md) | v0.1 | 不同数据类型的默认保留期限、Hot/Archive/Purge 边界与可配置策略 |
+| [Walmart Platform Capability Specification](./08-walmart-platform-capability-spec.md) | v0.1（进行中） | Store Connection、Platform Resource、Listing、Spec Version、Feed、Retire/Delete、Maximum Inventory 等 Walmart 能力 |
 
 ## 3. Foundation Architecture 核心原则
 
@@ -66,11 +68,11 @@ System Sync ≠ User Delegation
 
 ## 4. 下一步
 
-> **开发侧 PostgreSQL Schema 设计与技术评审**
+> **PostgreSQL Schema 设计 与 Walmart Platform Capability Specification 并行推进**
 
-阶段 1 当前已经完成核心业务对象的上层关系与开发交接约束。
+开发侧基于本目录和阶段 0 Baseline 输出第一版 PostgreSQL Logical / Physical Schema。
 
-下一步由开发人员基于本目录和阶段 0 Baseline 输出第一版 PostgreSQL Logical / Physical Schema。
+业务侧同步继续完善 Walmart Platform Capability Specification，作为后续 Walmart Adapter 与 Business Operation 的平台事实依据。
 
 业务侧不逐字段决定数据库实现；后续评审重点检查：
 
