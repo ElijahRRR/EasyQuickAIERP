@@ -606,6 +606,10 @@ Store Assignment History
 
 ## 25. 原则上只能追加、不能无痕覆盖的数据
 
+以下“保留”表示普通业务操作不能覆盖、重写或级联删除。
+
+实际物理保存期限、Archive 与最终清理统一由 [Data Retention Policy](./07-data-retention-policy.md) 管理。
+
 至少包括：
 
 - Store Assignment History；
@@ -624,7 +628,9 @@ Store Assignment History
 - Settlement Period Historical Snapshots；
 - Audit Log。
 
-如需纠错，应通过 New Version / Correction / Void / Adjustment 等可追踪方式处理，而不是无痕覆盖历史。
+在有效保留期内，如需纠错，应通过 New Version / Correction / Void / Adjustment 等可追踪方式处理，而不是无痕覆盖历史。
+
+达到 Retention Policy 期限后的 Archive / Final Purge 属于独立系统能力，不属于普通业务 Delete。
 
 ---
 
@@ -663,7 +669,7 @@ Workflow Delete → Delete Historical Audit
 Job Cleanup → Delete Business Records
 ```
 
-真正的物理删除 / 合规删除 / 数据修复属于专门平台管理流程，不属于普通业务 Delete。
+真正的物理删除 / 合规删除 / Retention Cleanup / 数据修复属于专门平台管理流程，不属于普通业务 Delete。
 
 ---
 
@@ -741,7 +747,8 @@ Schema / Technical Design Review 时，开发应能说明：
 12. 无法匹配 Order Line 的 Settlement Entry 如何保留；
 13. Job Log 清理为什么不会影响 Business Record；
 14. Requested By / Execute As 和执行时权限校验如何实现；
-15. Platform Fact 与 ERP Decision 如何避免混在同一状态模型。
+15. Platform Fact 与 ERP Decision 如何避免混在同一状态模型；
+16. 历史大表如何遵守 Data Retention Policy，且 Retention Cleanup 不破坏仍需保留的 Business Record。
 
 ---
 
