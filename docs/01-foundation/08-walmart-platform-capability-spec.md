@@ -410,40 +410,395 @@ ERP 业务层仍必须叫 Retire / 停用。
 
 ---
 
-## 9. Store Maximum Inventory Policy
+## 9. Price Model
 
-旧脚本中“库存特殊设置”的正式业务含义调整为：
-
-> **Store Maximum Inventory**
-
-它属于 Store Policy，不是 Product Source Inventory。
-
-必须区分：
+Walmart Listing 的价格必须至少区分三层：
 
 ~~~text
-Source Inventory
-= 来源端真实可售库存
+Source Price
+= 来源端当前价格，例如 Amazon 当前价格
 
-Store Maximum Inventory
-= 当前 Store 对在线 Listing 允许写给 Walmart 的最大库存
+ERP Target Price
+= ERP / Team Policy 当前希望 Walmart 使用的目标售价
+
+Walmart Observed Price
+= ERP 最近一次真实查询 Walmart 后观察到的平台实际售价
 ~~~
+
+因此：
+
+> **Source Price ≠ ERP Target Price ≠ Walmart Observed Price**
 
 例如：
 
 ~~~text
-Amazon Source Inventory = 37
-Store H006 Maximum Inventory = 10
+Source Price = 20.00
+ERP Target Price = 39.99
+Walmart Observed Price = 37.99
 ~~~
 
-最终写给 Walmart 的库存由库存业务规则根据来源事实和 Store Policy 决定。
+此时即使改价请求已经提交，ERP 也不能把 Walmart Platform Fact 直接改写成 39.99。
 
-不同 Store 可以配置不同 Maximum Inventory。
+### 9.1 单个与批量 Price Operation
 
-该配置修改后需要进入 Store Configuration History，以支持历史经营分析。
+ERP 统一提供：
+
+> Update Price
+
+单个或批量操作具有同一业务语义。
+
+Walmart Adapter 根据平台能力和批量规模，在执行前明确选择：
+
+- Single-item Price API；
+- Bulk Price Feed；
+- 必要时把大批量任务自动拆为多个 Feed。
+
+禁止采用：
+
+> 单品接口失败后无记录地自动换 Feed 再写一次
+
+这类隐式降级。
+
+### 9.2 Price Operation History
+
+价格操作至少需要能够还原：
+
+- Listing / SKU；
+- Before Observed Price；
+- Requested / Target Price；
+- Actor / Trigger；
+- Submission Method；
+- Feed / API Reference；
+- Execution Result；
+- Verification Status；
+- Verified Observed Price；
+- Verification Time；
+- Error / Mismatch Reason。
+
+Price Operation History 按 Data Retention Policy 管理。
+
+### 9.3 Promotion
+
+Walmart Promotion 属于 Pricing Capability，但本轮只正式确认普通售价的三层价格模型。
+
+Promotion 的业务对象、活动周期、普通售价与活动售价关系在后续 Pricing Capability 细化时再单独确认，不与当前 Selling Price 静默混为一个字段。
 
 ---
 
-## 10. 单个与批量 Business Operation
+## 10. Inventory Model
+
+库存至少区分四类业务数据：
+
+~~~text
+Source Inventory
+= 来源端真实 / 当前可售库存
+
+Node Maximum Inventory Policy
+= Team 对某 Store + Ship Node 可选配置的库存上限
+
+ERP Target Node Inventory
+= ERP 当前决定准备写给 Walmart 某节点的目标库存
+
+Walmart Observed Node Inventory
+= Walmart 实际查询得到的节点库存 Platform Fact
+~~~
+
+因此：
+
+> **Source Inventory ≠ Maximum Inventory Policy ≠ ERP Target Inventory ≠ Walmart Observed Inventory**
+
+### 10.1 Maximum Inventory 按 Ship Node 配置
+
+原“Store Maximum Inventory”修订为：
+
+> **Node Maximum Inventory Policy**
+
+作用范围：
+
+~~~text
+Team
+→ Store
+→ Walmart Ship Node
+→ Optional Maximum Inventory
+~~~
+
+该值：
+
+- 不是必填；
+- 由各 Team 自行配置；
+- 不存在时，不由这条规则强制限制该节点库存；
+- 可以不同 Node 使用不同上限；
+- 属于 Store / Fulfillment Policy；
+- 配置变化进入 Store Configuration History。
+
+例如：
+
+~~~text
+Store H006
+
+Node A Maximum = 10
+Node B Maximum = 5
+Node C Maximum = 未配置
+~~~
+
+具体多个节点如何共享 / 分配同一个 Source Inventory，属于后续 Node Allocation / Inventory Policy，不在本节写死。
+
+### 10.2 多节点库存是原始 Platform Fact
+
+ERP 必须保留 Walmart 每个 Ship Node 的库存明细。
+
+例如：
+
+~~~text
+SKU ABC
+
+Node A = 6
+Node B = 4
+Node C = 0
+
+Displayed Total = 10
+~~~
+
+Total 可以是 ERP 为展示而汇总的值。
+
+不能只保存 Total 而丢失 Node-level Platform Fact。
+
+### 10.3 Inventory Operation
+
+ERP 统一提供：
+
+> Update Inventory
+
+业务上可以：
+
+- 更新 Default Ship Node；
+- 更新指定单个 Ship Node；
+- 一次更新一个 SKU 的多个 Ship Node；
+- 批量更新多个 SKU × 多个 Ship Node。
+
+Walmart Adapter 根据平台能力决定 Single API / Multi-node API / Feed。
+
+### 10.4 Node-level Result
+
+一次多节点更新可能产生不同 Node 的独立执行结果。
+
+例如：
+
+~~~text
+Inventory Operation #100
+
+Node A → Success
+Node B → Success
+Node C → Failed
+~~~
+
+因此总体 Operation 可以是 Partial Success。
+
+开发不能只保存一个总的 Success / Failed 而丢失节点级结果。
+
+---
+
+## 11. Platform Effect Verification
+
+对于 Price / Inventory 等会修改 Walmart Platform Fact 的操作：
+
+> **API / Feed 请求成功，不等于平台最终值已经生效。**
+
+必须区分：
+
+~~~text
+Requested / Target Value
+↓
+Submission / Execution Result
+↓
+Verification Pending
+↓
+Real Platform Read-back
+↓
+Confirmed / Still Pending / Mismatch / Verification Failed
+~~~
+
+### 11.1 Price 必须真实回读确认
+
+Price Feed Item 或同步 API 显示成功以后：
+
+> ERP 必须联动执行至少一次真实 Walmart 价格查询，读取平台当前值。
+
+只有真实查询得到的 Observed Price 与 Target Price 符合预期时：
+
+> Price Operation 才可以标记为 Effect Confirmed。
+
+Feed Success 本身不能代替确认。
+
+### 11.2 Inventory 同样以真实节点库存为最终平台事实
+
+Inventory 写操作完成后，需要通过 Walmart Inventory Read Capability 获取节点实际库存。
+
+对于多节点：
+
+> Verification 必须能够落到对应 Ship Node。
+
+### 11.3 第一次回读不一致时不立即重复写
+
+平台状态可能存在传播延迟。
+
+因此第一次 Read-back 仍看到旧值时：
+
+- 不立即把原 Operation 判定为写失败；
+- 不立即重复提交同一个写操作；
+- 进入 Verification Pending / Not Yet Confirmed；
+- 按 Team / Platform Verification Policy 再次查询；
+- 超过确认窗口仍不一致，再形成 Mismatch / Needs Attention。
+
+这样避免：
+
+~~~text
+平台其实已经接受写入
+↓
+读取暂时还是旧值
+↓
+ERP 误判失败
+↓
+再次写入
+~~~
+
+造成重复或乱序操作。
+
+### 11.4 Requested Value 与 Observed Value 永远分开
+
+例如：
+
+~~~text
+Before Observed = 5
+Requested = 10
+API Result = Success
+First Read-back = 5
+Later Read-back = 10
+~~~
+
+最终：
+
+~~~text
+Execution Result = Success
+Effect Verification = Confirmed
+Confirmed Observed = 10
+~~~
+
+历史必须保留整个闭环，而不是只留下最终 10。
+
+---
+
+## 12. Shipping Template / Mapping / Override
+
+必须区分三个不同概念：
+
+~~~text
+Shipping Template
+≠
+SKU / Fulfillment Center Mapping
+≠
+Shipping Override
+~~~
+
+### 12.1 Shipping Template
+
+Shipping Template 是 Store-level Walmart Platform Resource。
+
+它表示配送规则本身。
+
+ERP 在 Walmart API 实际支持范围内管理其：
+
+- Read；
+- Create；
+- Update；
+- Delete / Status；
+- 其他平台提供的配置能力。
+
+### 12.2 SKU / Fulfillment Center Mapping
+
+Mapping 表示：
+
+> 某个 Listing / SKU 当前与哪些 Walmart Shipping / Fulfillment Resource 建立关联。
+
+它不是 Shipping Template 本身。
+
+ERP 必须保存当前平台关联事实，并对重要 Mapping 变化保留 Operation History。
+
+具体一个 SKU 可关联多少 Template / Fulfillment Center，由 Walmart 当前 API Capability 决定，通用 ERP 不自行发明基数限制。
+
+### 12.3 Shipping Override
+
+Shipping Override 表示：
+
+> 某个 SKU 相对于 Shipping Template 的特殊配送例外。
+
+因此：
+
+~~~text
+Template
+= 通用配送规则
+
+Mapping
+= SKU 使用什么平台资源
+
+Override
+= SKU 的特殊例外
+~~~
+
+ERP 不能把 Override 塞进 Template 当前值中覆盖原模板。
+
+### 12.4 Current Association 与历史分开
+
+例如：
+
+~~~text
+Jan:
+SKU ABC → Node A / Template 1
+
+Mar:
+SKU ABC → Node B / Template 2
+~~~
+
+当前平台关系可以是 Node B / Template 2。
+
+但历史需要能够知道之前使用过 Node A / Template 1。
+
+这些历史按照 Data Retention Policy 管理。
+
+---
+
+## 13. Ship Node / Shipping Template / Inventory 职责分开
+
+三个概念回答不同问题：
+
+~~~text
+Ship Node
+= 从哪里履约
+
+Shipping Template
+= 怎么配送
+
+Inventory
+= 这个节点当前有多少可售数量
+~~~
+
+因此开发不能把 Shipping Template 设计成 Inventory Record 的附属字段。
+
+通用关系应支持：
+
+~~~text
+Listing
+├ Platform Resource Associations
+├ Shipping Template Association / Mapping
+├ Shipping Overrides
+└ Node Inventories
+~~~
+
+Walmart 的具体组合规则由 Walmart Adapter / Capability 层表达。
+
+---
+
+## 14. 单个与批量 Business Operation
 
 EasyQuickAIERP V1 同时支持 Single Listing Operation 和 Batch Listing Operation。
 
@@ -455,7 +810,7 @@ EasyQuickAIERP V1 同时支持 Single Listing Operation 和 Batch Listing Operat
 - Update Price；
 - Update Inventory。
 
-Walmart Adapter 根据平台能力选择 Single-item API、Bulk Feed 或自动切片成多个 Feed。
+Walmart Adapter 根据平台能力选择 Single-item API、Bulk Feed、多节点 API 或自动切片成多个 Feed。
 
 因此：
 
@@ -463,7 +818,7 @@ Walmart Adapter 根据平台能力选择 Single-item API、Bulk Feed 或自动�
 
 ---
 
-## 11. Risk / Permission
+## 15. Risk / Permission
 
 Delete Listing 属于高风险操作。
 
@@ -481,11 +836,13 @@ Listing.Edit 等普通权限不能隐式包含 Delete。
 
 Retire / 停用也应作为独立明确 Business Operation，不与 Inventory Zero 混用。
 
+Price / Inventory 自动化同样必须使用正式 Business Operation 和 Actor / Permission Boundary。
+
 ---
 
-## 12. Data Retention
+## 16. Data Retention
 
-Walmart Listing / Feed 历史遵守：
+Walmart Listing / Feed / Price / Inventory 历史遵守：
 
 > [Data Retention Policy](./07-data-retention-policy.md)
 
@@ -501,7 +858,7 @@ Walmart Listing / Feed 历史遵守：
 
 ---
 
-## 13. 当前已确认原则
+## 17. 当前已确认原则
 
 1. 旧 WalmartAPI-Contral 只是已实现能力与 Production Lessons，不是 Walmart API 能力上限。
 2. Credential、Store Identity、Connection Health、Platform State 分开。
@@ -522,25 +879,63 @@ Walmart Listing / Feed 历史遵守：
 17. Inventory Zero ≠ Retire / 停用 ≠ Delete / 删除。
 18. Retire 中文统一为“停用”。
 19. Delete 中文统一为“删除”，属于高风险业务动作。
-20. Store Maximum Inventory 是 Store Policy，与 Product Source Inventory 分开。
-21. V1 同时支持单个和批量 Business Operation。
-22. 历史明细按照 Data Retention Policy 管理，不要求主库无限期保存。
+20. Source Price、ERP Target Price、Walmart Observed Price 三层分开。
+21. Maximum Inventory 按 Store + Ship Node 可选配置，由 Team 自行决定。
+22. Source Inventory、Node Maximum、ERP Target Node Inventory、Walmart Observed Node Inventory 分开。
+23. Walmart 多节点库存必须保存节点明细，总库存可以作为汇总展示值。
+24. 多节点 Inventory Operation 必须保留 Node-level Result，并支持 Partial Success。
+25. Shipping Template、SKU / Fulfillment Center Mapping、Shipping Override 三者分开。
+26. API / Feed Success 不等于 Price / Inventory 已经实际生效。
+27. Price Feed / API 成功后必须通过真实 Walmart Read-back 确认 Observed Price。
+28. Inventory 最终平台事实同样来自真实 Node Inventory Read-back。
+29. 第一次回读仍是旧值时不立即重复写，而是进入 Verification Pending 后按策略重查。
+30. V1 同时支持单个和批量 Business Operation。
+31. 历史明细按照 Data Retention Policy 管理，不要求主库无限期保存。
 
 ---
 
-## 14. 下一步
+## 18. 当前待继续确认
 
-下一轮继续 Walmart Capability：
+### 18.1 Multi-node Inventory Allocation Policy
 
-> **Price / Inventory / Multi-node Inventory / Shipping Template Mapping / Shipping Overrides**
+已经确认每个 Ship Node 可以拥有独立、可选 Maximum Inventory。
+
+仍待确认：
+
+> 当多个 Ship Node 共享同一个 Product Source Inventory 时，ERP 如何分配库存。
+
+可能的 Team Policy 例如：
+
+- Shared Pool：所有 Node 的 Target Inventory 合计不能超过 Source Inventory；
+- Independent Mirror：每个 Node 独立参考 Source Inventory 和自己的 Maximum；
+- Priority Allocation：按 Node 优先级依次分配；
+- Custom Workflow：由 Team 自定义。
+
+当前不写死。
+
+### 18.2 Promotion
+
+普通价格三层模型已经确认。
+
+Promotion 的独立业务模型后续再确认。
+
+---
+
+## 19. 下一步
+
+下一轮建议继续 Walmart Capability：
+
+> **Orders / Shipment / Cancellation / Returns / Refund**
 
 重点确认：
 
-- 当前价格与价格操作历史；
-- 单个 / 批量价格更新；
-- Source Inventory、Store Maximum Inventory、Walmart Node Inventory 三层关系；
-- 多节点库存展示与更新；
-- 默认 Ship Node 与指定 Ship Node；
-- Shipping Template 与 Listing / Fulfillment Center 的关系；
-- Shipping Overrides；
-- 哪些属于 Platform Fact，哪些属于 Team Policy。
+- Order Sync 与单单详情；
+- Platform Order Fact；
+- Order Line；
+- Confirm Shipment；
+- 一个 Order Line 多 Shipment；
+- Cancellation；
+- Return；
+- Refund；
+- ERP 主动 Refund 与平台同步 Refund 的区别；
+- 哪些操作需要 Effect Verification。
