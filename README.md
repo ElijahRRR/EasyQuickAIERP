@@ -41,6 +41,8 @@ EasyQuickAIERP 是一个面向多团队、多销售平台、多商品来源的�
 - [阶段 1 — ERP 地基索引](./docs/01-foundation/README.md)
 - [Foundation Architecture v0.2](./docs/01-foundation/01-foundation-architecture.md)
 - [业务对象关系与开发交接约束图 v0.1](./docs/01-foundation/06-business-object-relations-handoff-constraints.md)
+- [Data Retention Policy v0.1](./docs/01-foundation/07-data-retention-policy.md)
+- [Walmart Platform Capability Specification v0.1](./docs/01-foundation/08-walmart-platform-capability-spec.md)
 
 ## 文档原则
 
@@ -56,6 +58,6 @@ EasyQuickAIERP 是一个面向多团队、多销售平台、多商品来源的�
 
 继续阶段 1：
 
-> **开发侧 PostgreSQL Schema 设计与技术评审**
+> **PostgreSQL Schema 设计 + Walmart Platform Capability Specification 并行推进**
 
-开发人员基于阶段 0 Business Baseline 与阶段 1 Foundation / Data Ownership / Core Object / Handoff Constraints 输出第一版 Logical / Physical Schema；业务侧重点评审是否违反已确认业务关系和历史约束。
+开发人员继续输出第一版 Logical / Physical Schema；同时业务侧继续完善 Walmart 平台能力规格，为 Walmart Adapter、Business Operations 与后续页面能力提供平台事实依据。
