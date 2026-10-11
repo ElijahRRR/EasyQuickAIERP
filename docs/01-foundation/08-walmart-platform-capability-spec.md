@@ -921,21 +921,358 @@ Promotion 的独立业务模型后续再确认。
 
 ---
 
-## 19. 下一步
+## 19. Orders / Shipment / Cancellation / Returns / Refund
+
+## 19.1 Order Sync 与 Acknowledge 分开
+
+必须区分：
+
+~~~text
+Order Sync
+= 从 Walmart 读取 Platform Order Fact
+
+Acknowledge Order
+= 向 Walmart 执行正式平台动作，表示 Seller 已收到订单并准备履约
+~~~
+
+因此：
+
+> **收到订单 / 同步订单 ≠ 已经 Acknowledge。**
+
+Walmart 平台决定 Acknowledge 的平台语义和技术要求；ERP / Team Workflow 决定何时调用该能力。
+
+### 当前 Team 默认策略
+
+当前 Team 已确认：
+
+~~~text
+发现 / 同步新订单
+↓
+立即 Acknowledge
+↓
+ERP Order Audit
+   ├ Pending
+   ├ Reject
+   └ Pass
+~~~
+
+Acknowledge 不等待 Order Audit Pass。
+
+同时：
+
+~~~text
+Acknowledge
+≠ Order Audit Pass
+≠ Purchase
+≠ Shipment
+~~~
+
+### Actor 边界
+
+Order Sync 可以由受限 System Sync Service 执行。
+
+但 Acknowledge 是平台写操作，不由只读 System Sync Service 冒充执行。
+
+当前 Team 的“立即 Acknowledge”应通过明确 Team Workflow / Digital Employee Business Operation 执行，并使用相应权限与 Audit。
+
+---
+
+## 19.2 Platform Order Fact
+
+Walmart Order / Order Line 的平台事实由 Order Sync / Order Detail Read 获取。
+
+至少要保持：
+
+- Walmart Order Identity；
+- Order Line Identity；
+- SKU / Product Snapshot；
+- Quantity；
+- Amount；
+- Customer / Shipping Snapshot；
+- Platform Status；
+- Promise / Delivery Information；
+- Cancellation / Shipment / Refund 等平台事实；
+- First Seen / Last Synced；
+- 必要 Raw Platform Evidence。
+
+这些 Platform Fact 与 ERP Order Audit / Procurement Decision 分开。
+
+---
+
+## 19.3 Confirm Shipment
+
+Confirm Shipment 是独立 Walmart Business Operation。
+
+它不依赖 Source Purchase / Source Shipment 的系统级固定顺序。
+
+一个 Order Line 底层允许：
+
+~~~text
+0..N Platform Shipment
+~~~
+
+用于支持：
+
+- Partial Shipment；
+- Multiple Package；
+- Tracking Replacement；
+- 其他平台允许的多 Shipment 情况。
+
+### Shipment Effect Verification
+
+当前正式确认：
+
+> **Shipment API / Feed 成功不等于 Walmart Order Line 已经实际进入 Shipped Platform State。**
+
+闭环：
+
+~~~text
+Shipment Requested
+↓
+Walmart API / Feed Result
+↓
+Verification Pending
+↓
+真实读取 Walmart Order / Order Line
+↓
+Platform Shipment / Line State Confirmed
+~~~
+
+只有真实回读确认平台状态符合预期，才标记：
+
+> Effect Confirmed
+
+第一次回读尚未变化时，不立即重复发货请求，而是进入 Verification Pending 后按策略重查。
+
+---
+
+## 19.4 Cancellation
+
+Cancellation 以 Order Line 为主要平台操作粒度。
+
+不能只在 Sales Order 顶层维护一个简单 Cancelled 状态。
+
+必须区分：
+
+~~~text
+ERP Cancellation Decision
+≠
+Cancellation Requested to Walmart
+≠
+Walmart Observed Cancelled Fact
+~~~
+
+一个 Sales Order 可以出现：
+
+~~~text
+Line A = Shipped
+Line B = Cancelled
+Line C = Active
+~~~
+
+### Cancellation Effect Verification
+
+正式闭环：
+
+~~~text
+Cancel Order Line Requested
+↓
+Walmart Execution Result
+↓
+Verification Pending
+↓
+真实重新读取 Order / Order Line
+↓
+Platform Cancellation Confirmed / Mismatch
+~~~
+
+API 请求成功本身不能作为最终平台取消事实。
+
+---
+
+## 19.5 Refund
+
+ERP 使用统一 Refund 业务对象。
+
+~~~text
+Refund
+├ Order Line = required
+└ Return Reference = optional
+~~~
+
+原因是 Walmart 存在两类退款路径：
+
+### Order Refund
+
+~~~text
+Order / Order Line
+↓
+Refund
+~~~
+
+不要求存在 Return。
+
+### Return Refund
+
+~~~text
+Return Order
+↓
+Refund
+~~~
+
+可与 Return 建立关联。
+
+因此：
+
+> **业务上只有统一 Refund；Walmart Adapter 记录实际 Execution Route。**
+
+概念上可表达：
+
+~~~text
+Refund Execution Route
+= Order Refund
+或
+= Return Refund
+~~~
+
+不能把两个 Walmart Endpoint 设计成两个互不兼容的 ERP Refund 业务对象。
+
+Return 与 Refund 仍然保持：
+
+~~~text
+Return ≠ Refund
+~~~
+
+---
+
+## 19.6 Returns Capability
+
+EasyQuickAIERP 的 Walmart Returns 能力不以旧脚本当前只读实现为上限。
+
+### Seller-Fulfilled Return
+
+在 Walmart 当前实际支持范围内，ERP 目标能力包括：
+
+- View / Sync；
+- Approve；
+- Reject；
+- Refund。
+
+其中 Approve / Reject / Refund 都属于平台写操作，需要：
+
+- Human / Digital Actor；
+- Permission；
+- Business Validation；
+- Audit；
+- Platform Result Tracking。
+
+### WFS Return
+
+WFS Return 当前按照：
+
+> **Read / Sync Only**
+
+处理。
+
+ERP 不向 WFS Return 暴露 Seller 不具备的平台写能力。
+
+Capability 层必须能够根据 Fulfillment Type / Return Type 表达：
+
+~~~text
+Readable
+Writable
+Approvaable
+Rejectable
+Refundable
+~~~
+
+而不是对所有 Return 显示同一组按钮。
+
+---
+
+## 19.7 Return / Refund Platform Fact 与 ERP Operation 分开
+
+Returns Sync 获取的是：
+
+> Walmart 当前 Return / Refund Platform Fact。
+
+ERP 主动执行的：
+
+- Approve Return；
+- Reject Return；
+- Refund；
+
+属于 Business Operation。
+
+因此：
+
+~~~text
+Platform Return Fact
+≠
+ERP Return Decision / Action
+
+Platform Refund Fact
+≠
+ERP Refund Request
+~~~
+
+主动操作完成后仍需要后续平台同步 / 回读，把最终 Walmart Platform Fact 写回。
+
+---
+
+## 19.8 Orders Capability 的 Actor 原则
+
+推荐执行身份：
+
+~~~text
+System Sync Service
+→ Order / Return / Refund Platform Fact Read / Sync
+
+Human / Digital Employee
+→ Acknowledge
+→ Confirm Shipment
+→ Cancel Order Line
+→ Approve Return
+→ Reject Return
+→ Refund
+~~~
+
+System Sync Service 不能因为负责同步订单，就获得所有订单写权限。
+
+当前 Team 的自动 Acknowledge 可以由专门 Digital Employee / Workflow 立即触发。
+
+---
+
+## 20. 当前新增确认原则
+
+32. Order Sync 与 Acknowledge 是两个不同动作。
+33. 当前 Team 新订单同步后立即 Acknowledge，不等待 Order Audit Pass。
+34. Acknowledge 不等于 Audit Pass、Purchase 或 Shipment。
+35. System Sync Service 负责读 / 同步 Platform Fact；Acknowledge 等写操作由 Human / Digital Actor 执行。
+36. Shipment 成功请求后必须真实回读 Walmart Order / Order Line 确认平台 Shipped 状态。
+37. Cancellation 以 Order Line 为主要操作粒度，并通过真实回读形成 Effect Verification 闭环。
+38. Refund 使用统一 ERP 业务对象，Walmart Adapter 区分 Order Refund / Return Refund Execution Route。
+39. Refund 可以没有 Return；Return 与 Refund 仍是两个独立对象。
+40. Seller-Fulfilled Return 目标能力包括 View / Approve / Reject / Refund。
+41. WFS Return 当前按 Read / Sync Only 处理。
+42. Return / Refund Platform Fact 与 ERP 主动操作请求分开。
+43. Returns / Orders 写操作必须经过 Actor / Permission / Audit 边界。
+
+---
+
+## 21. 下一步
 
 下一轮建议继续 Walmart Capability：
 
-> **Orders / Shipment / Cancellation / Returns / Refund**
+> **Settlement / Reports / Performance / Store Platform State**
 
 重点确认：
 
-- Order Sync 与单单详情；
-- Platform Order Fact；
-- Order Line；
-- Confirm Shipment；
-- 一个 Order Line 多 Shipment；
-- Cancellation；
-- Return；
-- Refund；
-- ERP 主动 Refund 与平台同步 Refund 的区别；
-- 哪些操作需要 Effect Verification。
+- Settlement Period 与 Settlement Entry；
+- Payment Statement / Recon Report；
+- Pending Payout 与正式 Payout；
+- Report Request / Download；
+- Performance / Insights；
+- Store Platform State 与 Connection Health；
+- 哪些报表是正式业务事实，哪些只是观测 / 辅助数据；
+- 报表异步生成与 Job / Platform Report Request 的关系。
