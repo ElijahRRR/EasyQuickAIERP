@@ -939,26 +939,32 @@ Acknowledge Order
 
 > **收到订单 / 同步订单 ≠ 已经 Acknowledge。**
 
-Walmart 平台决定 Acknowledge 的平台语义和技术要求；ERP / Team Workflow 决定何时调用该能力。
+Walmart 平台决定 Acknowledge 的平台语义、允许条件和技术要求；ERP 只把它作为一个独立可调用的 Walmart Business Operation 提供。
 
-### 当前 Team 默认策略
+### Acknowledge 不固定属于某个 ERP 流程步骤
 
-当前 Team 已确认：
+正式确认：
 
-~~~text
-发现 / 同步新订单
-↓
-立即 Acknowledge
-↓
-ERP Order Audit
-   ├ Pending
-   ├ Reject
-   └ Pass
-~~~
+> **EasyQuickAIERP 不把 Acknowledge 强制绑定在 Order Sync、Order Audit、Procurement 或 Shipment 的固定前后关系中。**
 
-Acknowledge 不等待 Order Audit Pass。
+当前 Team 的真实操作方式是：
 
-同时：
+- 订单由人工处理；
+- 人工在处理订单时执行 Acknowledge；
+- 通常 Acknowledge 后会很快继续执行发货；
+- 旧 WalmartAPI-Contral 当前并没有自动执行 Acknowledge。
+
+这只是当前 Team 的人工操作习惯，不升级为 ERP 全局 Workflow。
+
+如果未来某个 Team 希望自动化，则由该 Team 自己配置：
+
+- 什么条件下可以 Acknowledge；
+- 由 Human / Digital Employee / Workflow 中哪个 Actor 执行；
+- Acknowledge 位于本 Team Workflow 的哪个步骤；
+- 与 Order Audit、Procurement、Shipment 的先后关系；
+- 异常时是否转人工处理。
+
+因此：
 
 ~~~text
 Acknowledge
@@ -967,13 +973,20 @@ Acknowledge
 ≠ Shipment
 ~~~
 
+并且：
+
+~~~text
+Acknowledge Timing
+= Team Workflow / Human Operation Decision
+~~~
+
 ### Actor 边界
 
 Order Sync 可以由受限 System Sync Service 执行。
 
-但 Acknowledge 是平台写操作，不由只读 System Sync Service 冒充执行。
+但 Acknowledge 是平台写操作，不由只读 System Sync Service 因“负责同步订单”而自动获得执行权限。
 
-当前 Team 的“立即 Acknowledge”应通过明确 Team Workflow / Digital Employee Business Operation 执行，并使用相应权限与 Audit。
+人工操作时由有权限的 Human Actor 执行；自动化时由被授权的 Digital Employee / Workflow 执行，并经过正式 Business Operation、Authorization 与 Audit。
 
 ---
 
@@ -1246,17 +1259,19 @@ System Sync Service 不能因为负责同步订单，就获得所有订单写权
 ## 20. 当前新增确认原则
 
 32. Order Sync 与 Acknowledge 是两个不同动作。
-33. 当前 Team 新订单同步后立即 Acknowledge，不等待 Order Audit Pass。
-34. Acknowledge 不等于 Audit Pass、Purchase 或 Shipment。
-35. System Sync Service 负责读 / 同步 Platform Fact；Acknowledge 等写操作由 Human / Digital Actor 执行。
-36. Shipment 成功请求后必须真实回读 Walmart Order / Order Line 确认平台 Shipped 状态。
-37. Cancellation 以 Order Line 为主要操作粒度，并通过真实回读形成 Effect Verification 闭环。
-38. Refund 使用统一 ERP 业务对象，Walmart Adapter 区分 Order Refund / Return Refund Execution Route。
-39. Refund 可以没有 Return；Return 与 Refund 仍是两个独立对象。
-40. Seller-Fulfilled Return 目标能力包括 View / Approve / Reject / Refund。
-41. WFS Return 当前按 Read / Sync Only 处理。
-42. Return / Refund Platform Fact 与 ERP 主动操作请求分开。
-43. Returns / Orders 写操作必须经过 Actor / Permission / Audit 边界。
+33. Acknowledge 是独立 Walmart Business Operation，不固定绑定在 Order Sync、Order Audit、Procurement 或 Shipment 的某一步。
+34. 当前 Team 由人工在处理订单时执行 Acknowledge，通常随后很快发货；旧 WalmartAPI-Contral 当前不自动执行 Acknowledge。
+35. 如果 Team 希望自动 Acknowledge，由该 Team 自行定义触发条件、Actor 和 Workflow 顺序。
+36. Acknowledge 不等于 Audit Pass、Purchase 或 Shipment。
+37. System Sync Service 负责读 / 同步 Platform Fact；Acknowledge 等写操作由有权限的 Human / Digital Actor 执行。
+38. Shipment 成功请求后必须真实回读 Walmart Order / Order Line 确认平台 Shipped 状态。
+39. Cancellation 以 Order Line 为主要操作粒度，并通过真实回读形成 Effect Verification 闭环。
+40. Refund 使用统一 ERP 业务对象，Walmart Adapter 区分 Order Refund / Return Refund Execution Route。
+41. Refund 可以没有 Return；Return 与 Refund 仍是两个独立对象。
+42. Seller-Fulfilled Return 目标能力包括 View / Approve / Reject / Refund。
+43. WFS Return 当前按 Read / Sync Only 处理。
+44. Return / Refund Platform Fact 与 ERP 主动操作请求分开。
+45. Returns / Orders 写操作必须经过 Actor / Permission / Audit 边界。
 
 ---
 
