@@ -638,31 +638,25 @@ Inventory 写操作完成后，需要通过 Walmart Inventory Read Capability �
 
 > Verification 必须能够落到对应 Ship Node。
 
-### 11.3 第一次回读不一致时不立即重复写
+### 11.3 回读不一致时的业务语义
 
-平台状态可能存在传播延迟。
+如果真实 Read-back 与 Requested / Target Value 不一致：
 
-因此第一次 Read-back 仍看到旧值时：
+> ERP 不能把该操作标记为 Effect Confirmed。
 
-- 不立即把原 Operation 判定为写失败；
-- 不立即重复提交同一个写操作；
-- 进入 Verification Pending / Not Yet Confirmed；
-- 按 Team / Platform Verification Policy 再次查询；
-- 超过确认窗口仍不一致，再形成 Mismatch / Needs Attention。
+业务上应进入：
 
-这样避免：
+- Verification Pending / Not Yet Confirmed；
+- 或在确认窗口结束后进入 Mismatch / Needs Attention。
 
-~~~text
-平台其实已经接受写入
-↓
-读取暂时还是旧值
-↓
-ERP 误判失败
-↓
-再次写入
-~~~
+具体：
 
-造成重复或乱序操作。
+- 多久再次查询；
+- 是否自动重试；
+- 重试多少次；
+- Backoff / Queue / Idempotency；
+
+属于开发技术可靠性设计，不由业务模型写死。
 
 ### 11.4 Requested Value 与 Observed Value 永远分开
 
@@ -1055,7 +1049,7 @@ Platform Shipment / Line State Confirmed
 
 > Effect Confirmed
 
-第一次回读尚未变化时，不立即重复发货请求，而是进入 Verification Pending 后按策略重查。
+如果真实回读尚未显示预期 Shipped 状态，则业务上保持 Verification Pending / Not Confirmed；后续重查与技术重试策略由开发设计。
 
 ---
 
@@ -1099,7 +1093,7 @@ Verification Pending
 Platform Cancellation Confirmed / Mismatch
 ~~~
 
-API 请求成功本身不能作为最终平台取消事实。
+API 请求成功本身不能作为最终平台取消事实；如果真实回读尚未显示 Cancelled，则业务上保持 Not Confirmed / Mismatch，具体技术重查与重试由开发设计。
 
 ---
 
@@ -1252,7 +1246,7 @@ Human / Digital Employee
 
 System Sync Service 不能因为负责同步订单，就获得所有订单写权限。
 
-当前 Team 的自动 Acknowledge 可以由专门 Digital Employee / Workflow 立即触发。
+如果某个 Team 配置自动 Acknowledge，可由被授权的 Digital Employee / Workflow 执行；当前 Team 仍以人工操作为准。
 
 ---
 
@@ -1708,19 +1702,312 @@ Oct 10 ACTIVE
 
 ---
 
-## 23. 下一步
+## 23. Walmart Business Result Handling
 
-下一轮建议继续 Walmart Capability：
+本节只确认：
 
-> **Platform Error / Rate Limit / Retry / Webhook / Capability Matrix 收口**
+> Walmart 返回 / 观察到某种业务结果以后，ERP 应如何理解，以及业务下一步允许做什么。
 
-重点确认：
+以下内容不在业务侧决定：
 
-- Walmart Error 原文与 Normalized Error；
-- 业务错误 vs Connection Error vs Platform System Error；
-- Rate Limit；
-- Retry；
-- 写操作幂等 / 防重；
-- Webhook 是否进入 V1；
-- Capability Matrix 如何描述 Read / Write / Async / Verification；
-- Walmart Capability Specification v0.1 收口条件。
+- HTTP Retry 次数；
+- Backoff / Jitter；
+- Rate Limit Bucket；
+- Worker / Queue；
+- 幂等技术实现；
+- 网络超时后如何做传输层补偿。
+
+这些属于开发技术设计与评审。
+
+### 23.1 Listing / Content / Identifier Result
+
+正式确认：
+
+#### 可修复资料问题
+
+例如：
+
+- Required Attribute 缺失；
+- Spec 不满足；
+- Product Type / Category 错误；
+- 可修复的 GTIN / UPC / Mapping 问题。
+
+业务结果：
+
+~~~text
+Recoverable Listing Issue
+→ 生成待处理项
+→ 修正资料
+→ 允许重新提交
+~~~
+
+#### Policy / Prohibited / IP / Brand Restriction
+
+进入：
+
+> Risk / Compliance Resolution
+
+不进入普通“自动修字段再重上”路径。
+
+#### Unknown Platform Error
+
+保存 Walmart Raw Error，并进入：
+
+> Unknown / Needs Classification
+
+不猜测根因，不自动执行破坏性动作。
+
+### 23.2 Price Result Mismatch
+
+如果：
+
+~~~text
+ERP Target Price ≠ Walmart Observed Price
+~~~
+
+则：
+
+- Walmart Observed Price 仍作为当前 Platform Fact；
+- ERP Target Price 仍作为目标值；
+- 该操作标记为 Not Confirmed / Mismatch；
+- 产生 Price Exception / Needs Attention；
+- 是否再次执行由 Team Policy / Workflow 决定。
+
+批量操作中其他已确认成功的 Listing 不因个别价格异常被整体判失败。
+
+### 23.3 Multi-node Inventory Result
+
+Inventory Result 按 Ship Node 独立判断。
+
+例如：
+
+~~~text
+Node A → Confirmed
+Node B → Mismatch
+Node C → Confirmed
+~~~
+
+整体 Operation 可以显示 Partial Success / Partial Confirmed。
+
+已成功节点事实不因其他节点异常而被回滚或覆盖。
+
+Node Maximum Inventory 未配置时：
+
+> 不应用该 Maximum Policy。
+
+未配置不等于 Maximum = 0。
+
+### 23.4 Explicit Platform Resource Selection
+
+如果某次操作明确选择了：
+
+- Ship Node；
+- Shipping Template；
+- Return Center；
+- 其他 Walmart Platform Resource；
+
+而该 Resource 已失效 / 不可用：
+
+> 该操作不能静默切换到另一个 Resource 或 Walmart Default。
+
+只有用户 / Team Policy 明确选择：
+
+> Use Platform Default
+
+时，才允许走平台默认行为。
+
+因此：
+
+~~~text
+Explicit Resource Selection Failure
+≠
+Silent Fallback to Default
+~~~
+
+### 23.5 ERP Decision 与 Walmart Execution Result
+
+对于：
+
+- Shipment；
+- Cancellation；
+- Refund；
+- Return Approve / Reject；
+- Acknowledge；
+- Platform Resource Change；
+- 其他 Walmart 写操作；
+
+必须保持：
+
+~~~text
+ERP Decision / Requested Action
+≠
+Walmart Execution Result
+≠
+Observed Platform Fact
+~~~
+
+例如：
+
+~~~text
+ERP Cancellation Decision = Cancel
+Walmart Result = Rejected
+Observed Order Line = Shipped
+~~~
+
+ERP 必须保存真实结果并进入运营异常处理，不能因为 ERP 想取消就把平台事实改成 Cancelled。
+
+---
+
+## 24. Suspended / Terminated Business Handling
+
+### 24.1 SUSPENDED
+
+只有在 Walmart Platform State 已被可靠 Evidence 明确确认为 SUSPENDED 时，应用以下业务处理。
+
+ERP 停止主动经营写操作：
+
+- 新 Listing；
+- Listing 批量维护类主动写操作；
+- Price 自动经营性更新；
+- Inventory 自动经营性更新。
+
+ERP 继续：
+
+- Order Sync；
+- Return / Refund Sync；
+- Settlement；
+- Performance；
+- Store State Sync；
+- Historical Query。
+
+现有订单仍可能来自暂停前已经产生的订单，需要继续管理。
+
+当前明确允许的订单 / 售后侧处理包括：
+
+- Cancel；
+- Refund；
+- 必要 After-sales。
+
+其他既有订单动作是否可执行，以 Walmart 当时实际 Platform Capability 和 Team 操作为准。
+
+这里不需要 ERP 另外“阻止新增销售”：
+
+> Store 被 Walmart SUSPENDED 后，平台本身已经限制销售能力。
+
+ERP 要做的是停止主动新增 / 经营性写操作，而不是伪造一个平台销售开关。
+
+### 24.2 TERMINATED
+
+当 Platform State 被可靠 Evidence 明确确认为 TERMINATED：
+
+> 停止所有新的销售经营动作。
+
+同时，如果 Team 使用 Store-scoped Brand / Product Occupancy / Allocation Claim：
+
+> **自动释放该 Store 占用的 Brand 和 Product。**
+
+该释放属于 ERP 内部业务动作，不是 Walmart Platform Fact。
+
+仍然必须保留：
+
+- Store History；
+- Listing History；
+- Existing Orders；
+- Return / Refund；
+- Settlement；
+- Finance；
+- Audit；
+- Historical Assignment。
+
+### 24.3 Terminated 后 API 能力不预设
+
+当前不能确认：
+
+> Store TERMINATED 后 Walmart API 是否仍然保持可用，以及哪些接口还能使用。
+
+实际业务中通常可能出现 Credential / API 很快失效。
+
+因此 ERP 不预设：
+
+~~~text
+TERMINATED
+→ API 一定还能用
+~~~
+
+也不预设：
+
+~~~text
+API 失效
+→ 必然是 TERMINATED
+~~~
+
+正式处理：
+
+- Platform State 继续保存已确认的 TERMINATED Evidence；
+- Connection Health 独立记录 API 是否仍可访问；
+- 如果 API 仍允许既有订单 / 售后 / Settlement 操作，则继续处理；
+- 如果 API 已不可用，则保留内部历史与待处理责任，不伪造平台操作已完成。
+
+### 24.4 SUSPENDED 不自动释放 Brand / Product Occupancy
+
+当前只确认：
+
+> TERMINATED 自动释放 Store-scoped Brand / Product Occupancy。
+
+SUSPENDED 不自动释放，避免短期暂停导致经营占用关系无意被其他 Store 抢占。
+
+---
+
+## 25. 当前新增确认原则
+
+59. Listing 的资料 / Spec / Category 等可修复错误进入待修复处理，修复后允许再次提交。
+60. Policy / Prohibited / IP / Brand Restriction 进入 Risk / Compliance Resolution，不按普通资料错误处理。
+61. Unknown Walmart Error 保存原文并进入待分类，不猜测处理。
+62. Price Target 与 Observed 不一致时，以 Observed 为 Platform Fact，并产生 Price Exception。
+63. Multi-node Inventory 按 Node 独立确认，允许 Partial Success / Partial Confirmed。
+64. Node Maximum Inventory 未配置不等于 0。
+65. Explicit Platform Resource 不可用时不得静默退回 Default。
+66. ERP Decision、Walmart Execution Result、Observed Platform Fact 三者分开。
+67. SUSPENDED 时停止新 Listing、Listing 主动批量维护、自动 Price / Inventory 经营性更新。
+68. SUSPENDED 后继续 Order / Return / Refund / Settlement / Performance / Store State Sync 与历史查询。
+69. SUSPENDED 下现有订单仍需处理；当前明确保留 Cancel、Refund 与必要 After-sales 能力。
+70. TERMINATED 时停止所有新的销售经营动作。
+71. TERMINATED 时自动释放该 Store 的 Brand / Product Occupancy（如 Team 使用该占用能力）。
+72. SUSPENDED 不自动释放 Brand / Product Occupancy。
+73. TERMINATED 后 Walmart API 是否仍可用不做平台能力假设；Platform State 与 Connection Health 继续分开。
+74. 即使 TERMINATED 后 API 已不可用，ERP 仍保留 Existing Orders / After-sales / Settlement / Finance / Audit 等历史责任。
+
+---
+
+## 26. 技术可靠性设计边界
+
+以下属于开发负责，不需要业务方逐项批准：
+
+- HTTP Retry；
+- Retry Count；
+- Backoff；
+- Jitter；
+- Rate Limit 调度；
+- Feed 技术防重；
+- Correlation ID 生成与传递；
+- Queue / Worker；
+- 网络 Unknown Outcome 的技术查证方法；
+- Idempotency 技术方案。
+
+业务侧只要求开发最终保证：
+
+> **不能因为技术失败或重试机制，伪造业务成功、覆盖 Platform Fact、或者制造重复业务副作用。**
+
+这些内容进入后续 Technical Design Review，而不是继续由业务方决定实现算法。
+
+---
+
+## 27. 下一步
+
+Walmart Capability v0.1 还剩最后几个业务范围需要确认：
+
+- Settlement 异常如何进入人工核对；
+- Performance 异常只是告警，还是允许 Team 配自动动作；
+- Risk / Compliance 命中后在在线 Listing 上的默认处理；
+- Webhook 是否进入 V1 产品范围；
+- 最终 Walmart Capability Matrix 与 v0.1 收口。
