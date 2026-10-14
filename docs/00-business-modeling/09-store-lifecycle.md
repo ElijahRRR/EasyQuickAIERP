@@ -1,4 +1,4 @@
-# 店铺生命周期业务模型 v0.3
+# 店铺生命周期业务模型 v0.4
 
 > 状态：已确认  
 > 所属阶段：ERP 阶段 0 — 业务建模
@@ -298,26 +298,41 @@ Store H001
 
 # 13. Suspended 不代表 ERP 停止管理
 
-如果：
+当可靠 Evidence 明确确认：
 
 ```text
 Platform State = SUSPENDED
 ```
 
-只表示：
+ERP 停止主动经营写操作：
 
-> 平台经营能力受限。
+- 新 Listing；
+- Listing 批量维护类主动写操作；
+- Price 自动经营性更新；
+- Inventory 自动经营性更新。
 
-ERP 仍然可能继续管理：
+ERP 继续：
 
-- Existing Orders；
-- Procurement；
-- Logistics；
-- Return / Refund；
+- Order Sync；
+- Return / Refund Sync；
 - Settlement；
-- Payout；
-- Historical Listing；
-- Profit。
+- Performance；
+- Store State Sync；
+- Historical Query。
+
+暂停前已经产生的 Existing Orders 仍需要处理。
+
+当前明确保留：
+
+- Cancel；
+- Refund；
+- 必要 After-sales。
+
+其他既有订单动作按 Marketplace 当时实际能力和 Team 决策执行。
+
+SUSPENDED 时平台本身已经限制新增销售，因此 ERP 不需要额外伪造“禁止销售”平台状态。
+
+当前不自动释放 Brand / Product Occupancy。
 
 因此：
 
@@ -327,13 +342,19 @@ ERP 仍然可能继续管理：
 
 # 14. Terminated 也不代表数据结束
 
-即使：
+当可靠 Evidence 明确确认：
 
 ```text
 Platform State = TERMINATED
 ```
 
-Store 仍可能存在：
+ERP 停止所有新的销售经营动作。
+
+如果 Team 使用 Store-scoped Brand / Product Occupancy / Allocation Claim：
+
+> 自动释放该 Store 已占用的 Brand 和 Product。
+
+但仍然保留和管理历史责任：
 
 - Remaining Orders；
 - After-sales；
@@ -341,7 +362,12 @@ Store 仍可能存在：
 - Chargeback；
 - Settlement；
 - Remaining Balance；
-- Final Payout。
+- Final Payout；
+- Historical Business Data。
+
+当前不预设 TERMINATED 后 Marketplace API 一定仍可使用。
+
+如果 API 仍可处理既有订单 / 售后 / Settlement，则继续；如果 API 已失效，则 Connection Health 独立记录不可用，ERP 仍保留内部历史与待处理责任。
 
 因此：
 
@@ -670,20 +696,8 @@ Historical Data Retained
 8. Team Ownership、Operation Group Assignment、Operator Assignment 属于组织关系。
 9. Connection Failed 不得自动推断 Platform Suspended / Terminated。
 10. 不同 Store 允许不同经营配置。
-11. Suspended 后 ERP 仍可继续管理现有业务。
-12. Terminated 后历史及后续财务业务继续保留。
-13. 人工删除 Store 实际表示 Unbind / Remove Active Connection。
-14. Unbind 不删除历史数据。
-15. Team A 不能直接 Transfer Store 给 Team B。
-16. 跨公司更换管理主体由原 Team Unbind、新 Team 自行 Bind。
-17. 不同 Team 的历史数据保持隔离。
-18. Store 可以在 Team 内更换负责人。
-19. Store 可以在 Team 内更换运营组。
-20. 负责人和运营组变化必须保存历史 Assignment。
-21. 历史订单按业务发生时的负责人 / 运营组归属。
-22. 后续 Settlement / Refund 改变金额时，不改变该历史订单原来的责任归属。
-23. Store 当前归属和历史归属都需要可查询。
-24. Walmart Platform Warehouse / Shipping Template 等属于平台资源配置，不代表 ERP 已建立实体 Warehouse / WMS Domain。
+11. Suspended 后停止新 Listing、主动 Listing 批量维护和自动 Price / Inventory 经营性更新，但继续管理 Existing Orders、售后、Settlement、Performance、状态同步与历史查询。
+12. Suspended 不自动释放 Brand / Product Occupancy。\n13. Terminated 后停止所有新的销售经营动作；如使用 Store-scoped Brand / Product Occupancy，则自动释放该 Store 的 Brand / Product 占用。\n14. Terminated 后历史及后续财务 / 售后责任继续保留；API 是否仍可用由 Connection Health 实际观察，不做预设。\n15. 人工删除 Store 实际表示 Unbind / Remove Active Connection。\n16. Unbind 不删除历史数据。\n17. Team A 不能直接 Transfer Store 给 Team B。\n18. 跨公司更换管理主体由原 Team Unbind、新 Team 自行 Bind。\n19. 不同 Team 的历史数据保持隔离。\n20. Store 可以在 Team 内更换负责人。\n21. Store 可以在 Team 内更换运营组。\n22. 负责人和运营组变化必须保存历史 Assignment。\n23. 历史订单按业务发生时的负责人 / 运营组归属。\n24. 后续 Settlement / Refund 改变金额时，不改变该历史订单原来的责任归属。\n25. Store 当前归属和历史归属都需要可查询。\n26. Walmart Platform Warehouse / Shipping Template 等属于平台资源配置，不代表 ERP 已建立实体 Warehouse / WMS Domain。
 
 ---
 
