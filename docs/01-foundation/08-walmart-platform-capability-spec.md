@@ -1,6 +1,6 @@
 # Walmart Platform Capability Specification v0.1
 
-> 状态：进行中；本文仅包含当前已确认部分  
+> 状态：已确认（Baseline v0.1）  
 > 所属阶段：阶段 1 — ERP 地基  
 > 平台：Walmart Marketplace  
 > 目标：定义 Walmart 平台真实能力、旧系统已验证能力与 EasyQuickAIERP 产品目标之间的边界。
@@ -2002,12 +2002,274 @@ SUSPENDED 不自动释放，避免短期暂停导致经营占用关系无意被�
 
 ---
 
-## 27. 下一步
+## 27. Settlement Matching Scope
 
-Walmart Capability v0.1 还剩最后几个业务范围需要确认：
+当前不建立：
 
-- Settlement 异常如何进入人工核对；
-- Performance 异常只是告警，还是允许 Team 配自动动作；
-- Risk / Compliance 命中后在在线 Listing 上的默认处理；
-- Webhook 是否进入 V1 产品范围；
-- 最终 Walmart Capability Matrix 与 v0.1 收口。
+> “Settlement Entry 没有 Order Line = Reconciliation Exception”
+
+这一全局规则。
+
+部分 Walmart 财务明细本身可能合法属于：
+
+- Store-level Fee；
+- Adjustment；
+- Period-level Charge；
+- 其他不天然属于单个 Order Line 的平台财务事实。
+
+因此：
+
+~~~text
+Settlement Entry → Order Line = optional
+~~~
+
+Optional 本身不代表异常。
+
+如果未来出现：
+
+> 某类业务上理论上应该匹配 Order Line，但 ERP 实际无法匹配
+
+当前 V1 不提前设计特殊状态机或人工处理流程，等出现真实案例后再扩展。
+
+---
+
+## 28. Performance Handling
+
+Seller Performance 默认处理：
+
+~~~text
+Performance Observation
+↓
+Threshold / Problem Detection
+↓
+Alert / Problem Detail
+↓
+Human Review
+~~~
+
+默认不因为 Performance Metric 异常自动执行：
+
+- Retire Listing；
+- Delete Listing；
+- Inventory Zero；
+- Price Change；
+- Store Disable；
+- 其他经营写操作。
+
+如果某个 Team 希望：
+
+~~~text
+Metric Condition
+→ Automatic Business Operation
+~~~
+
+必须由该 Team 在 Workflow / Policy 中明确配置。
+
+因此：
+
+> **Performance 默认 = Observation + Alert；自动动作 = Team Policy / Workflow。**
+
+---
+
+## 29. Trigger Model for V1
+
+EasyQuickAIERP V1 必须支持两类主动触发入口：
+
+~~~text
+Manual Trigger
+Scheduled Trigger
+~~~
+
+两者最终调用相同 Business Operation / Sync Capability。
+
+### 29.1 Manual Trigger
+
+用于：
+
+- 开发测试；
+- 人工补同步；
+- 运营排障；
+- 临时立即执行；
+- 指定 Store / Object 验证。
+
+不能因为存在 Scheduled Job 就取消人工触发能力。
+
+### 29.2 Scheduled Trigger
+
+用于周期性：
+
+- Order Sync；
+- Return / Refund Sync；
+- Listing / Store State Sync；
+- Settlement / Report Pull；
+- Performance Sync；
+- 其他需要定时对账的能力。
+
+具体调度频率属于 Workflow / Job 配置。
+
+### 29.3 Webhook 不进入 V1
+
+当前正式确认：
+
+> **Walmart Webhook 不进入 EasyQuickAIERP V1 必做范围。**
+
+V1 不依赖 Webhook 完成核心同步和测试。
+
+未来如果出现实时性需求，可以增加：
+
+~~~text
+Walmart Webhook
+→ Trigger Related Sync / Read
+→ Persist Confirmed Platform Fact
+~~~
+
+但未来 Webhook 仍只作为触发信号，不应天然取代真实 API Read / Reconciliation。
+
+架构不得阻塞未来接入 Webhook，但当前不为它增加 V1 产品复杂度。
+
+---
+
+## 30. Walmart Capability Matrix v0.1
+
+下面矩阵描述 EasyQuickAIERP V1 当前确认的 Walmart 产品能力目标。
+
+说明：
+
+- **Read**：可读取 / 同步平台事实；
+- **Write**：可主动修改平台；
+- **Batch**：业务上支持批量操作；
+- **Async**：平台可能通过 Feed / Report 等异步方式处理；
+- **Verify**：操作后需要通过真实平台读取 / 对账确认业务效果；
+- **Risk**：明显高风险业务动作；
+- **V1**：是否进入第一版 ERP 产品范围。
+
+| Capability | Read | Write | Batch | Async | Verify | Risk | V1 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Store Connection / Partner Identity | ✓ | 配置 | — | — | ✓ |  | ✓ |
+| Ship Node / Fulfillment Center | ✓ | ✓ | 平台能力决定 | 平台能力决定 | ✓ |  | ✓ |
+| Shipping Template | ✓ | ✓ | 平台能力决定 | 平台能力决定 | ✓ |  | ✓ |
+| Return Center | ✓ | 平台允许范围 | 平台能力决定 | 平台能力决定 | ✓ |  | ✓ |
+| Create New Listing | ✓ | ✓ | ✓ | ✓ | ✓ |  | ✓ |
+| GTIN / UPC Match Existing Listing | ✓ | ✓ | ✓ | ✓ | ✓ |  | ✓ |
+| Listing Content Maintenance | ✓ | ✓ | ✓ | ✓ | ✓ |  | ✓ |
+| Retire / 停用 | ✓ | ✓ | ✓ | API / Feed | ✓ | 高 | ✓ |
+| Delete / 删除 | ✓ | ✓ | ✓ | Feed / 平台能力 | ✓ | 很高 | ✓ |
+| Price | ✓ | ✓ | ✓ | API / Feed | ✓ |  | ✓ |
+| Promotion | 平台支持 | 后续细化 | 后续细化 | 平台能力 | ✓ |  | 非 v0.1 核心 |
+| Node Inventory | ✓ | ✓ | ✓ | API / Feed | ✓ |  | ✓ |
+| SKU / Fulfillment / Template Mapping | ✓ | ✓ | ✓ | Feed / API | ✓ |  | ✓ |
+| Shipping Override | ✓ | ✓ | ✓ | Feed / API | ✓ |  | ✓ |
+| Order Sync / Detail | ✓ | — | ✓ | — | — |  | ✓ |
+| Acknowledge | ✓状态 | ✓ | 平台能力决定 | API | ✓ |  | ✓ |
+| Platform Shipment | ✓ | ✓ | 平台能力决定 | API | ✓ | 中 | ✓ |
+| Cancellation | ✓ | ✓ | Order Line 级 | API | ✓ | 高 | ✓ |
+| Seller-Fulfilled Return | ✓ | Approve / Reject / Refund | 平台能力决定 | API | ✓ | 中/高 | ✓ |
+| WFS Return | ✓ | — | — | — | — |  | ✓ |
+| Refund | ✓ | ✓ | 平台能力决定 | API | ✓ | 很高 | ✓ |
+| Recon / Settlement | ✓ | — | ✓ | Report | Parse / Reconcile |  | ✓ |
+| Payment Statement Snapshot | ✓ | — | — | API | — |  | ✓ |
+| ERP-created Walmart Report Request | ✓ | 创建请求 | — | ✓ | Download / Parse |  | ✓ |
+| Walmart Report Scheduler | 平台能力 | — | — | — | — |  | 不进入 V1 |
+| Seller Performance | ✓ | — | ✓ | API / Report | — |  | ✓ |
+| Seller Program Status | 平台能力 | — | — | — | — |  | ✓ |
+| Platform State Observation | ✓ | — | — | — | Evidence |  | ✓ |
+| Manual Trigger | ERP 内部 | ERP 内部 | ✓ | Job | 依业务动作 | 依动作 | ✓ |
+| Scheduled Trigger | ERP 内部 | ERP 内部 | ✓ | Job | 依业务动作 | 依动作 | ✓ |
+| Walmart Webhook | Future | Future | — | Event | API Read Confirm |  | 不进入 V1 |
+
+---
+
+## 31. Capability Support Status
+
+开发和后续 Platform Adapter 文档必须区分：
+
+~~~text
+Platform Supported
+ERP Supported
+ERP Planned
+Read Only
+Partially Supported
+Not Implemented Yet
+Deprecated
+Not Applicable
+~~~
+
+尤其：
+
+> **Not Implemented Yet ≠ Walmart Unsupported**
+
+旧 WalmartAPI-Contral 是否实现，只能作为 Legacy Implementation / Production Evidence 信息，不能作为 Platform Support 判断依据。
+
+---
+
+## 32. v0.1 Deferred Items
+
+以下内容不阻塞 Walmart Capability v0.1 收口：
+
+### Multi-node Inventory Allocation Policy
+
+已经确认每个 Node 可以独立配置 Optional Maximum Inventory。
+
+但多个 Node 如何共享同一个 Source Inventory，由 Team Policy / Workflow 决定，当前不定义全局默认算法。
+
+### Promotion
+
+普通 Selling Price 模型已经确认。
+
+Promotion 作为独立 Pricing Capability 后续在出现实际产品需求时继续细化。
+
+### Rare Settlement Matching Exception
+
+业务上理论上应匹配某个 Order Line、但实际无法匹配的异常场景，当前没有真实案例，不提前设计状态机。
+
+### Terminated API Availability
+
+TERMINATED 后具体哪些 Walmart API 仍然可用，以未来真实平台行为为准，不提前假设。
+
+### Walmart Webhook
+
+当前不进入 V1。
+
+如果未来需要更高实时性，再作为 Trigger Capability 扩展。
+
+---
+
+## 33. Walmart Capability v0.1 收口结论
+
+当前 Walmart Platform Capability Specification 已覆盖 V1 所需的主要平台业务边界：
+
+- Store Connection；
+- Platform Resource；
+- Listing / Spec / Feed；
+- Price；
+- Multi-node Inventory；
+- Shipping；
+- Retire / Delete；
+- Orders / Acknowledge / Shipment / Cancellation；
+- Returns / Refund；
+- Settlement / Reports；
+- Performance；
+- Store Platform State；
+- Business Result Handling；
+- Manual / Scheduled Trigger；
+- Capability Matrix；
+- Data Retention 关联；
+- 技术可靠性与业务决策边界。
+
+因此：
+
+> **Walmart Platform Capability Specification v0.1 正式标记为 Baseline v0.1。**
+
+Baseline 不表示以后不再修改。
+
+后续如果 Walmart API、真实业务或 Team 需求产生新事实：
+
+1. 更新对应 Capability；
+2. 保留 Git 历史；
+3. 再调整 Platform Adapter / Business Operation / UI。
+
+下一步业务侧可以进入：
+
+> **Business Operation Catalog（正式业务动作清单）**
+
+同时开发侧继续完成 PostgreSQL Logical / Physical Schema。
