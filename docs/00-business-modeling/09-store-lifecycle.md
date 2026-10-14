@@ -697,7 +697,21 @@ Historical Data Retained
 9. Connection Failed 不得自动推断 Platform Suspended / Terminated。
 10. 不同 Store 允许不同经营配置。
 11. Suspended 后停止新 Listing、主动 Listing 批量维护和自动 Price / Inventory 经营性更新，但继续管理 Existing Orders、售后、Settlement、Performance、状态同步与历史查询。
-12. Suspended 不自动释放 Brand / Product Occupancy。\n13. Terminated 后停止所有新的销售经营动作；如使用 Store-scoped Brand / Product Occupancy，则自动释放该 Store 的 Brand / Product 占用。\n14. Terminated 后历史及后续财务 / 售后责任继续保留；API 是否仍可用由 Connection Health 实际观察，不做预设。\n15. 人工删除 Store 实际表示 Unbind / Remove Active Connection。\n16. Unbind 不删除历史数据。\n17. Team A 不能直接 Transfer Store 给 Team B。\n18. 跨公司更换管理主体由原 Team Unbind、新 Team 自行 Bind。\n19. 不同 Team 的历史数据保持隔离。\n20. Store 可以在 Team 内更换负责人。\n21. Store 可以在 Team 内更换运营组。\n22. 负责人和运营组变化必须保存历史 Assignment。\n23. 历史订单按业务发生时的负责人 / 运营组归属。\n24. 后续 Settlement / Refund 改变金额时，不改变该历史订单原来的责任归属。\n25. Store 当前归属和历史归属都需要可查询。\n26. Walmart Platform Warehouse / Shipping Template 等属于平台资源配置，不代表 ERP 已建立实体 Warehouse / WMS Domain。
+12. Suspended 不自动释放 Brand / Product Occupancy。
+13. Terminated 后停止所有新的销售经营动作；如使用 Store-scoped Brand / Product Occupancy，则自动释放该 Store 的 Brand / Product 占用。
+14. Terminated 后历史及后续财务 / 售后责任继续保留；API 是否仍可用由 Connection Health 实际观察，不做预设。
+15. 人工删除 Store 实际表示 Unbind / Remove Active Connection。
+16. Unbind 不删除历史数据。
+17. Team A 不能直接 Transfer Store 给 Team B。
+18. 跨公司更换管理主体由原 Team Unbind、新 Team 自行 Bind。
+19. 不同 Team 的历史数据保持隔离。
+20. Store 可以在 Team 内更换负责人。
+21. Store 可以在 Team 内更换运营组。
+22. 负责人和运营组变化必须保存历史 Assignment。
+23. 历史订单按业务发生时的负责人 / 运营组归属。
+24. 后续 Settlement / Refund 改变金额时，不改变该历史订单原来的责任归属。
+25. Store 当前归属和历史归属都需要可查询。
+26. Walmart Platform Warehouse / Shipping Template 等属于平台资源配置，不代表 ERP 已建立实体 Warehouse / WMS Domain。
 
 ---
 
