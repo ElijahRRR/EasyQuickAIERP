@@ -27,7 +27,7 @@
 | [核心对象业务信息需求（第三批）](./05-core-object-business-information-3.md) | v0.1 | Platform Shipment、Tracking、Return、Refund、Settlement Entry、Settlement Period / Payout 的业务信息与历史保留 |
 | [业务对象关系与开发交接约束图](./06-business-object-relations-handoff-constraints.md) | v0.1 | 核心对象基数、可空关系、历史保留、禁止级联删除、Job/权限、Platform Fact 与 ERP Decision 开发约束 |
 | [Data Retention Policy](./07-data-retention-policy.md) | v0.1 | 不同数据类型的默认保留期限、Hot/Archive/Purge 边界与可配置策略 |
-| [Walmart Platform Capability Specification](./08-walmart-platform-capability-spec.md) | v0.1（进行中） | Store Connection、Platform Resource、Listing/Feed、Price/Inventory、Shipping、Orders/Returns、Settlement/Reports、Performance、Store State 等 Walmart 能力 |
+| [Walmart Platform Capability Specification](./08-walmart-platform-capability-spec.md) | Baseline v0.1 | Store Connection、Platform Resource、Listing/Feed、Price/Inventory、Shipping、Orders/Returns、Settlement/Reports、Performance、Store State 等 Walmart 能力 |
 
 ## 3. Foundation Architecture 核心原则
 
