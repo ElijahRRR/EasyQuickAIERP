@@ -42,7 +42,7 @@ EasyQuickAIERP 是一个面向多团队、多销售平台、多商品来源的�
 - [Foundation Architecture v0.2](./docs/01-foundation/01-foundation-architecture.md)
 - [业务对象关系与开发交接约束图 v0.1](./docs/01-foundation/06-business-object-relations-handoff-constraints.md)
 - [Data Retention Policy v0.1](./docs/01-foundation/07-data-retention-policy.md)
-- [Walmart Platform Capability Specification v0.1](./docs/01-foundation/08-walmart-platform-capability-spec.md)
+- [Walmart Platform Capability Specification v0.2](./docs/01-foundation/08-walmart-platform-capability-spec.md)
 - [正式业务动作清单 v0.1](./docs/01-foundation/09-business-operation-catalog.md)
 
 ## 文档原则
