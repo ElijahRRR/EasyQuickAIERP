@@ -1026,20 +1026,230 @@ Purchase B = 2 件
 
 ---
 
-## 9. 下一批
+## 9. 采购下单后的处理与 Walmart 发货
+
+### 9.1 修正已经登记的采购资料
+
+采购人员已经登记真实 Purchase 后，如果发现录入错误，例如：
+
+- Amazon / Source Order ID 填错；
+- Tax 填错；
+- 商品金额填错；
+- Shipping Cost 填错；
+- 实际支付金额填错；
+- Seller / Variant 等采购事实录入错误；
+
+允许有权限的人进行修正。
+
+但正式确认：
+
+> **采购事实可以纠错，但不能无痕覆盖。**
+
+系统需要保留：
+
+- 修改前内容；
+- 修改后内容；
+- 修改人；
+- 修改时间；
+- 修改原因（适用时）。
+
+---
+
+### 9.2 来源采购被取消后重新计算未覆盖数量
+
+例如某条订单商品需要采购 3 件：
+
+~~~text
+Purchase A = 2 件，正常
+Purchase B = 1 件，Amazon / Seller Cancelled
+~~~
+
+则被取消的 1 件：
+
+> 重新成为当前仍未被有效采购覆盖的数量。
+
+如果只是部分取消：
+
+> 只重新释放被取消的数量。
+
+系统需要让采购 / 运营能够看到：
+
+> 当前还缺多少件需要解决。
+
+但：
+
+> **来源采购被取消，不代表 ERP 自动再下一笔采购订单。**
+
+是否重新采购，由人工或 Team 后续配置的 Workflow 决定。
+
+---
+
+### 9.3 来源退款与采购履约状态分开
+
+Amazon / 其他来源发生 Refund 时，首先记录：
+
+> 采购侧资金变化。
+
+不能仅根据“发生退款”推断：
+
+- Purchase 已取消；
+- 商品没有发货；
+- 商品没有送达；
+- 原采购数量一定失效。
+
+例如可能存在：
+
+- 取消后全额退款；
+- 送达后退货退款；
+- Partial Refund；
+- 运费退款；
+- 价格补偿；
+- 其他 Credit / Adjustment。
+
+因此正式保持：
+
+~~~text
+Purchase Refund
+≠
+Purchase Cancelled
+≠
+商品一定未履约
+~~~
+
+只有存在明确取消、退货、未发货或其他履约证据时，才改变相应采购履约判断。
+
+---
+
+### 9.4 原采购失败后的重新采购
+
+如果原采购任务的需求没有改变，只是第一次真实采购失败：
+
+~~~text
+Procurement Task PT001
+├ Purchase A → Seller Cancelled
+└ Purchase B → Re-purchase
+~~~
+
+第二次重新购买：
+
+> 仍然属于原来的 Procurement Task。
+
+不因为每次重新采购都新建一个采购任务。
+
+这样一个采购任务可以完整表达：
+
+> 为满足同一个采购需求，实际尝试过哪些 Purchase。
+
+只有出现新的采购需求，例如：
+
+- 售后补发；
+- 新增补购需求；
+- 其他独立履约需求；
+
+才创建新的 Procurement Task。
+
+所有历史 Purchase 继续保留。
+
+---
+
+### 9.5 人工向 Walmart 提交发货信息
+
+EasyQuickAIERP V1 必须支持有权限的人员人工通过 ERP 向 Walmart 提交发货信息。
+
+人工发货时可以填写平台实际要求的信息，例如：
+
+- 对应 Order Line；
+- 发货数量；
+- Carrier；
+- Tracking Number；
+- 其他 Walmart 要求的发货信息。
+
+人工提交发货：
+
+> 不依赖 ERP 必须先观察到 Amazon / Source 已发货。
+
+采购和 Walmart 发货仍然是两个独立业务过程。
+
+---
+
+### 9.6 一个订单商品支持多个包裹 / 多个 Tracking
+
+例如客户购买 3 件：
+
+~~~text
+Order Line Qty = 3
+
+Package A
+Qty = 1
+Tracking = A
+
+Package B
+Qty = 2
+Tracking = B
+~~~
+
+ERP V1 必须能够表达并操作这种情况。
+
+因此不能把：
+
+> 一条 Order Line 只能有一个 Tracking
+
+写成系统限制。
+
+一个 Order Line 可以存在多个 Walmart Shipment / Tracking，并分别承担不同数量。
+
+---
+
+### 9.7 来源物流信息不自动提交 Walmart
+
+即使 ERP 已经读取到 Amazon / Source 的：
+
+- Shipped；
+- Carrier；
+- Tracking；
+- ETA；
+
+也不能因此默认自动向 Walmart Confirm Shipment。
+
+正式保持：
+
+> **读取来源物流事实 ≠ 向 Walmart 提交发货。**
+
+当前 Team 可以人工发货。
+
+未来如果 Team 要自动化，由 Workflow 明确配置触发条件、权限和执行顺序。
+
+---
+
+## 10. 第二批订单 / 采购已确认原则
+
+14. 已登记 Purchase 允许纠错，但必须保留修改历史。
+15. 来源采购被取消后，被取消数量重新成为未覆盖采购数量。
+16. 来源采购被取消不自动触发新的采购下单。
+17. Purchase Refund 首先表示采购侧资金变化，不自动等于 Purchase Cancelled 或商品未履约。
+18. 同一采购需求下的重新采购继续属于原 Procurement Task，并新增独立 Purchase。
+19. 新的独立采购需求才创建新的 Procurement Task。
+20. V1 必须支持人工向 Walmart 提交发货。
+21. 一个 Order Line 必须支持多个 Shipment / Tracking 以及各自的发货数量。
+22. Source Shipment / Tracking 被 ERP 观察到，不自动提交 Walmart 发货。
+23. 是否自动 Walmart 发货属于 Team Workflow，而不是 ERP 全局规则。
+
+---
+
+## 11. 下一批
 
 下一批继续确认：
 
-> **采购已经真实下单以后，以及 Walmart 发货相关操作**
+> **发货信息修正、Walmart 发货失败、Return / Refund 售后操作**
 
 重点包括：
 
-- 已下单的采购是否允许人工修改；
-- Amazon / 来源订单取消；
-- 来源退款；
-- 采购异常后的重新采购；
-- 多次重新采购之间的关系；
-- Walmart 发货；
-- 一个订单商品分多个包裹发货；
-- Tracking 修改 / 更换；
-- 发货失败后的处理。
+- Tracking 填错后怎么修；
+- 已经提交 Walmart 的 Tracking 是否保留旧历史；
+- Walmart 拒绝发货时订单怎么显示；
+- 同步 Return；
+- Approve / Reject Return；
+- Full / Partial Refund；
+- Refund without Return；
+- 退款金额填错或平台拒绝后的处理；
+- 售后与采购侧取消 / 退款的关系。
