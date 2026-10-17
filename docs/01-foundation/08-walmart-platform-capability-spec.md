@@ -2198,7 +2198,7 @@ Walmart Webhook
 
 ---
 
-## 30. Walmart Capability Matrix v0.1
+## 30. Walmart Capability Matrix v0.2
 
 下面矩阵描述 EasyQuickAIERP V1 当前确认的 Walmart 产品能力目标。
 
@@ -2224,13 +2224,14 @@ Walmart Webhook
 | Retire / 停用 | ✓ | ✓ | ✓ | API / Feed | ✓ | 高 | ✓ |
 | Delete / 删除 | ✓ | ✓ | ✓ | Feed / 平台能力 | ✓ | 很高 | ✓ |
 | Price | ✓ | ✓ | ✓ | API / Feed | ✓ |  | ✓ |
-| Promotion | 平台支持 | 后续细化 | 后续细化 | 平台能力 | ✓ |  | 非 v0.1 核心 |
+| Promotion | 平台支持 | 后续细化 | 后续细化 | 平台能力 | ✓ |  | 非 v0.2 核心 |
 | Node Inventory | ✓ | ✓ | ✓ | API / Feed | ✓ |  | ✓ |
 | SKU / Fulfillment / Template Mapping | ✓ | ✓ | ✓ | Feed / API | ✓ |  | ✓ |
 | Shipping Override | ✓ | ✓ | ✓ | Feed / API | ✓ |  | ✓ |
 | Order Sync / Detail | ✓ | — | ✓ | — | — |  | ✓ |
 | Acknowledge | ✓状态 | ✓ | 平台能力决定 | API | ✓ |  | ✓ |
 | Platform Shipment | ✓ | ✓ | Walmart US 多包裹写入待实测 | API | ✓ | 中 | ✓ |
+| Shipment Tracking Correction | ✓ | ✓（受平台修改窗口限制） | — | API | ✓ | 中 | ✓ |
 | Cancellation | ✓ | ✓ | Order Line 级 | API | ✓ | 高 | ✓ |
 | Seller-Fulfilled Return | ✓ | Approve / Reject / Refund（按当前 Return 可操作性） | 平台能力决定 | API | ✓ | 中/高 | ✓ |
 | WFS Return | ✓ | — | — | — | — |  | ✓ |
@@ -2271,9 +2272,9 @@ Not Applicable
 
 ---
 
-## 32. v0.1 Deferred Items
+## 32. v0.2 Deferred Items
 
-以下内容不阻塞 Walmart Capability v0.1 收口：
+以下内容不阻塞 Walmart Capability v0.2 收口：
 
 ### Multi-node Inventory Allocation Policy
 
@@ -2310,6 +2311,16 @@ ERP 通用模型支持多个 Shipment / Tracking。
 > 当前待 Sandbox / Production 实测。
 
 在实测确认前，不把它标记为 Walmart US Supported。
+
+### Return Shipping Label
+
+Walmart Returns API 存在 Return Shipping Label 相关能力。
+
+当前 EasyQuickAIERP V1：
+
+> 不把 Return Shipping Label 作为核心必做能力。
+
+如果后续真实售后流程需要，再按 Walmart 当时实际资格、Return 类型和 API 能力扩展。
 
 ---
 
