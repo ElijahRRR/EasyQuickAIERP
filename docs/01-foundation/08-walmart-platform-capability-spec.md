@@ -1,6 +1,6 @@
-# Walmart Platform Capability Specification v0.1
+# Walmart Platform Capability Specification v0.2
 
-> 状态：已确认（Baseline v0.1）  
+> 状态：已确认（Baseline v0.2）  
 > 所属阶段：阶段 1 — ERP 地基  
 > 平台：Walmart Marketplace  
 > 目标：定义 Walmart 平台真实能力、旧系统已验证能力与 EasyQuickAIERP 产品目标之间的边界。
@@ -1012,18 +1012,58 @@ Confirm Shipment 是独立 Walmart Business Operation。
 
 它不依赖 Source Purchase / Source Shipment 的系统级固定顺序。
 
-一个 Order Line 底层允许：
+### Walmart Shipping 的平台前置条件
+
+Walmart 当前官方 Orders API 要求：
+
+> **订单必须先 Acknowledge，才能执行 Shipping。**
+
+这不改变 ERP 的通用流程原则：
+
+- Acknowledge 不固定绑定在 Order Sync、Order Audit、Procurement 的某一步；
+- 但真正调用 Walmart Shipping 时，必须满足 Walmart 的“已 Acknowledge”前置条件。
+
+### Shipment / Tracking 的通用模型与 Walmart US 能力分开
+
+ERP 通用数据模型允许：
 
 ~~~text
-0..N Platform Shipment
+Order Line
+→ 0..N Platform Shipment
+→ 0..N Tracking
 ~~~
 
-用于支持：
+用于兼容：
 
-- Partial Shipment；
-- Multiple Package；
-- Tracking Replacement；
-- 其他平台允许的多 Shipment 情况。
+- 不同 Marketplace；
+- 不同国家站点；
+- 外部物流系统；
+- 未来平台能力。
+
+但是 Walmart US 当前不能直接据此声明：
+
+> 同一 Order Line 可以通过 US Orders API 拆成多个包裹并分别写入多个 Tracking。
+
+当前官方 Multi-package Shipping 文档明确面向 Canada / Mexico；因此 Walmart US 该写能力在 Sandbox / Production 实测前标记为：
+
+> **Pending Verification / Not Yet Confirmed**
+
+ERP 通用模型支持多 Shipment，不等于 Walmart US Adapter 已支持该写法。
+
+### Tracking / Carrier Correction
+
+Walmart 当前 Shipping API 支持在订单已经 Shipped 后，通过 processMode=PARTIAL_UPDATE 更正 Tracking 信息。
+
+平台允许窗口为：
+
+- 原始 Shipping Submission 后 24 小时以内；或
+- Carrier 第一次 touch scan 被 Walmart 记录之前；
+
+> **以先发生者为截止。**
+
+因此 ERP V1 应提供“更正发货信息”能力，并保留旧 Carrier / Tracking 历史。
+
+是否仍可修改由 Walmart Adapter 根据平台当前规则判断，不能无条件显示可修改。
 
 ### Shipment Effect Verification
 
@@ -1119,6 +1159,8 @@ Refund
 
 不要求存在 Return。
 
+Walmart 当前支持对订单进行全额或部分退款。对于 Multi-Line / Multi-Quantity Order，Partial Refund 必须能够明确对应实际退款 Quantity。
+
 ### Return Refund
 
 ~~~text
@@ -1150,6 +1192,31 @@ Return 与 Refund 仍然保持：
 Return ≠ Refund
 ~~~
 
+### Refund Validation
+
+退款前，ERP 应根据当前 Walmart Platform Fact 和当前 API 规则判断：
+
+- Order Line 是否允许退款；
+- 当前剩余可退款 Quantity；
+- 当前剩余可退款 Amount；
+- 当前 Return / Fulfillment Type 是否允许 Seller 执行退款。
+
+Walmart 当前 Returns Refund 规则包括：
+
+- 可退款 Order Line 需要满足平台允许的状态条件；
+- Refund Amount 不能超过原收费；
+- 支持 Line-level Partial Refund；
+- WFS Return 不允许 Seller-issued Refund。
+
+ERP Refund Request 与 Walmart Observed Refund Fact 必须分开。
+
+如果 Refund Request 被 Walmart Reject：
+
+- 保留本次失败；
+- 重新读取当前 Order / Return / Refund Fact；
+- 修正后创建新的 Refund Attempt；
+- 后续成功不能覆盖旧失败记录。
+
 ---
 
 ## 19.6 Returns Capability
@@ -1180,6 +1247,8 @@ WFS Return 当前按照：
 > **Read / Sync Only**
 
 处理。
+
+Walmart 官方当前明确：Seller 不能对 WFS Return 执行 Approve、Reject 或 Seller-issued Refund。
 
 ERP 不向 WFS Return 暴露 Seller 不具备的平台写能力。
 
@@ -2161,11 +2230,11 @@ Walmart Webhook
 | Shipping Override | ✓ | ✓ | ✓ | Feed / API | ✓ |  | ✓ |
 | Order Sync / Detail | ✓ | — | ✓ | — | — |  | ✓ |
 | Acknowledge | ✓状态 | ✓ | 平台能力决定 | API | ✓ |  | ✓ |
-| Platform Shipment | ✓ | ✓ | 平台能力决定 | API | ✓ | 中 | ✓ |
+| Platform Shipment | ✓ | ✓ | Walmart US 多包裹写入待实测 | API | ✓ | 中 | ✓ |
 | Cancellation | ✓ | ✓ | Order Line 级 | API | ✓ | 高 | ✓ |
-| Seller-Fulfilled Return | ✓ | Approve / Reject / Refund | 平台能力决定 | API | ✓ | 中/高 | ✓ |
+| Seller-Fulfilled Return | ✓ | Approve / Reject / Refund（按当前 Return 可操作性） | 平台能力决定 | API | ✓ | 中/高 | ✓ |
 | WFS Return | ✓ | — | — | — | — |  | ✓ |
-| Refund | ✓ | ✓ | 平台能力决定 | API | ✓ | 很高 | ✓ |
+| Refund | ✓ | Full / Partial；支持 Quantity | 平台能力决定 | API | ✓ | 很高 | ✓ |
 | Recon / Settlement | ✓ | — | ✓ | Report | Parse / Reconcile |  | ✓ |
 | Payment Statement Snapshot | ✓ | — | — | API | — |  | ✓ |
 | ERP-created Walmart Report Request | ✓ | 创建请求 | — | ✓ | Download / Parse |  | ✓ |
@@ -2232,9 +2301,19 @@ TERMINATED 后具体哪些 Walmart API 仍然可用，以未来真实平台行�
 
 如果未来需要更高实时性，再作为 Trigger Capability 扩展。
 
+### Walmart US Multi-package Shipping
+
+ERP 通用模型支持多个 Shipment / Tracking。
+
+但 Walmart US 对“同一 Order Line 拆成多个包裹并分别写入多个 Tracking”的实际 API 支持：
+
+> 当前待 Sandbox / Production 实测。
+
+在实测确认前，不把它标记为 Walmart US Supported。
+
 ---
 
-## 33. Walmart Capability v0.1 收口结论
+## 33. Walmart Capability v0.2 收口结论
 
 当前 Walmart Platform Capability Specification 已覆盖 V1 所需的主要平台业务边界：
 
@@ -2258,7 +2337,7 @@ TERMINATED 后具体哪些 Walmart API 仍然可用，以未来真实平台行�
 
 因此：
 
-> **Walmart Platform Capability Specification v0.1 正式标记为 Baseline v0.1。**
+> **Walmart Platform Capability Specification v0.2 正式标记为 Baseline v0.2。**
 
 Baseline 不表示以后不再修改。
 
@@ -2273,3 +2352,21 @@ Baseline 不表示以后不再修改。
 > **Business Operation Catalog（正式业务动作清单）**
 
 同时开发侧继续完成 PostgreSQL Logical / Physical Schema。
+
+
+---
+
+## 34. v0.2 官方能力核验来源
+
+本次发货与售后能力修订以 Walmart 当前官方文档为主要依据：
+
+- Ship an order: https://developer.walmart.com/us-marketplace/docs/ship-an-order
+- Shipping, cancellations, and refunds: https://developer.walmart.com/us-marketplace/docs/cancellations-and-refunds
+- Returns API overview: https://developer.walmart.com/us-marketplace/docs/returns-and-refunds-api-overview
+- Issue a refund: https://developer.walmart.com/us-marketplace/docs/issue-a-refund
+- Multi-Line Multi-Quantity migration guide: https://developer.walmart.com/us-marketplace/lang-zh/docs/multi-line-multi-quantity-mlmq-migration-guide
+- Global Orders API / Multi-package availability: https://developer.walmart.com/global-marketplace/docs/choose-an-orders-api-mp
+
+官方文档与 Production / Sandbox 实际行为冲突时：
+
+> 继续遵守本规格第 1 节的证据顺序，以最新官方能力 + 实测结果修订 Adapter Capability。
