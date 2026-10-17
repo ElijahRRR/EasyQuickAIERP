@@ -1,4 +1,4 @@
-# 物流生命周期业务模型 v0.2
+# 物流生命周期业务模型 v0.3
 
 > 状态：已确认  
 > 所属阶段：ERP 阶段 0 — 业务建模
@@ -990,3 +990,28 @@ ERP 最重要的责任是：
 因此 Logistics Module 最终应该是一个：
 
 > **可插拔、可部分使用、可以独立于采购存在的业务能力。**
+
+
+---
+
+## 38. Walmart 人工发货能力补充
+
+EasyQuickAIERP V1 必须支持有权限人员人工向 Walmart 提交发货信息。
+
+一条 Order Line 可以拆分为多个 Shipment / Tracking，并分别记录各自承担的发货数量。
+
+例如：
+
+~~~text
+Order Line Qty 3
+├ Package A → Qty 1 → Tracking A
+└ Package B → Qty 2 → Tracking B
+~~~
+
+因此 ERP 不能把“一条 Order Line 只能有一个 Tracking”写成系统限制。
+
+同时：
+
+> 观察到 Source Shipment / Source Tracking，不自动等于向 Walmart 提交发货。
+
+当前 Team 可以人工执行 Walmart 发货；未来是否自动提交由 Team Workflow 决定。
