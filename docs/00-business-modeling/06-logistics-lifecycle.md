@@ -1,4 +1,4 @@
-# 物流生命周期业务模型 v0.3
+# 物流生命周期业务模型 v0.4
 
 > 状态：已确认  
 > 所属阶段：ERP 阶段 0 — 业务建模
@@ -288,22 +288,15 @@ ERP 通用能力必须允许：
 
 > 一个 Sales Order Line 向 Walmart 提交一条 Tracking。
 
-但这是：
+ERP 通用物流模型仍然不能把“一条 Order Line 永远只能有一个 Shipment / Tracking”写成全局约束。
 
-**Current Team Policy**
+但 Walmart 美国站当前是否支持：
 
-而不是：
+> 同一 Order Line 通过 US Orders API 拆成多个包裹并分别写入不同 Tracking
 
-**ERP Constraint**。
+不在阶段 0 直接假设。
 
-其他 Team 可以根据：
-
-- Platform；
-- Package；
-- Quantity；
-- 自己的履约方式；
-
-决定使用一个或多个 Shipment / Tracking。
+该平台写能力需要在 Walmart Adapter 的 Sandbox / Production 实测确认后，才能标记为 Supported。
 
 ---
 
@@ -325,10 +318,14 @@ Source Shipment 也可能：
 - Shipment A：Qty 1；
 - Shipment B：Qty 2。
 
-Platform Shipment 又可能：
+Platform Shipment 在通用 ERP 模型中可能：
 
 - 只使用一个 Tracking；
-- 或拆成多个 Tracking。
+- 或存在多个 Shipment / Tracking。
+
+具体某个平台 / 国家站是否允许实际写入多个包裹：
+
+> 由对应 Platform Capability + 实测结果决定。
 
 因此：
 
@@ -1015,3 +1012,63 @@ Order Line Qty 3
 > 观察到 Source Shipment / Source Tracking，不自动等于向 Walmart 提交发货。
 
 当前 Team 可以人工执行 Walmart 发货；未来是否自动提交由 Team Workflow 决定。
+
+
+---
+
+## 39. Walmart US 发货能力补充
+
+Walmart 美国站的业务规则需要与 ERP 通用物流模型分开。
+
+### 39.1 发货前需要 Acknowledge
+
+Acknowledge 不属于 ERP 全局固定流程步骤。
+
+但是：
+
+> Walmart Shipping 本身要求订单已经 Acknowledged。
+
+因此团队可以自己决定何时 Acknowledge，但真正提交 Walmart 发货前必须满足该平台前置条件。
+
+### 39.2 Carrier / Tracking 更正
+
+Walmart 当前允许在其平台规定的修改窗口内更正已经提交的 Carrier / Tracking。
+
+ERP 应把这理解为新的“更正发货信息”操作，并保留：
+
+- 原 Carrier / Tracking；
+- 更正后的 Carrier / Tracking；
+- 操作时间；
+- Actor；
+- Walmart 返回结果。
+
+不能无痕覆盖第一次提交。
+
+是否仍处于可修改窗口由 Walmart Adapter 按当前官方规则判断。
+
+### 39.3 发货请求失败不等于平台已发货
+
+ERP 发起 Shipping 后，如果 Walmart 拒绝 / 返回失败：
+
+> Platform Shipment / Order Line 不能被伪造为 Shipped。
+
+只有 Walmart 最终接受，并通过后续真实读取确认平台状态，才形成已发货 Platform Fact。
+
+### 39.4 Walmart US 多包裹能力当前待验证
+
+ERP 通用模型允许一个 Order Line 关联多个 Shipment / Tracking。
+
+但 Walmart US V1：
+
+> 不把同一 Order Line 多包裹 / 多 Tracking 写入声明为已确认支持。
+
+在 Sandbox / Production 实测之前，Walmart US Adapter 必须标记为待验证能力。
+
+---
+
+## 40. 新增确认原则
+
+29. Walmart Shipping 的平台前置条件包括订单已 Acknowledged，但 ERP 不固定 Acknowledge 在采购流程中的位置。
+30. Walmart Carrier / Tracking 更正必须保留旧值历史。
+31. Walmart 发货请求失败不能把平台事实标记为 Shipped。
+32. ERP 通用模型支持 0..N Shipment / Tracking；Walmart US 多包裹写入能力待实测确认。
