@@ -1172,31 +1172,30 @@ EasyQuickAIERP V1 必须支持有权限的人员人工通过 ERP 向 Walmart 提
 
 ---
 
-### 9.6 一个订单商品支持多个包裹 / 多个 Tracking
+### 9.6 ERP 通用模型支持多个包裹 / 多个 Tracking
 
-例如客户购买 3 件：
+ERP 通用数据模型不能把：
+
+> 一条 Order Line 永远只能有一个 Shipment / Tracking
+
+写成全局限制。
+
+原因是不同平台、不同国家站点、外部物流和未来能力可能需要多个包裹 / Tracking。
+
+但是对 **Walmart 美国站 V1**：
+
+> 当前不把“同一 Order Line 可通过 US Orders API 拆成多个包裹并分别写入不同 Tracking”声明为已确认能力。
+
+Walmart US Adapter 必须在 Sandbox / Production 实测确认后，才能把该能力标记为 Supported。
+
+因此：
 
 ~~~text
-Order Line Qty = 3
-
-Package A
-Qty = 1
-Tracking = A
-
-Package B
-Qty = 2
-Tracking = B
+ERP Generic Model = 支持 0..N Shipment / Tracking
+Walmart US Write Capability = 当前待实测确认
 ~~~
 
-ERP V1 必须能够表达并操作这种情况。
-
-因此不能把：
-
-> 一条 Order Line 只能有一个 Tracking
-
-写成系统限制。
-
-一个 Order Line 可以存在多个 Walmart Shipment / Tracking，并分别承担不同数量。
+不能因为 ERP 底层支持，就让美国站页面暴露未经验证的平台写操作。
 
 ---
 
@@ -1230,26 +1229,264 @@ ERP V1 必须能够表达并操作这种情况。
 18. 同一采购需求下的重新采购继续属于原 Procurement Task，并新增独立 Purchase。
 19. 新的独立采购需求才创建新的 Procurement Task。
 20. V1 必须支持人工向 Walmart 提交发货。
-21. 一个 Order Line 必须支持多个 Shipment / Tracking 以及各自的发货数量。
+21. ERP 通用模型必须支持一个 Order Line 关联多个 Shipment / Tracking；Walmart US 是否支持同一 Order Line 多包裹分别写入，当前待 Sandbox / Production 实测确认。
 22. Source Shipment / Tracking 被 ERP 观察到，不自动提交 Walmart 发货。
 23. 是否自动 Walmart 发货属于 Team Workflow，而不是 ERP 全局规则。
 
 ---
 
-## 11. 下一批
+## 11. Walmart 发货修正与售后操作
+
+### 11.1 Walmart 发货前必须已经 Acknowledge
+
+Acknowledge 在 ERP 中仍然是独立动作，不固定绑定在采购前或采购后。
+
+但是对 Walmart：
+
+> **真正执行 Walmart Shipping 时，该订单必须已经 Acknowledged。**
+
+因此：
+
+~~~text
+ERP Workflow 不固定 Acknowledge 在采购流程中的位置
+但
+Walmart Shipping 的平台前置条件 = 已 Acknowledge
+~~~
+
+这属于 Walmart 平台能力约束，不是 ERP 全局 Workflow。
+
+---
+
+### 11.2 更正已经提交的 Carrier / Tracking
+
+Walmart 当前允许在一定平台窗口内更正已提交的 Carrier / Tracking。
+
+ERP V1 应提供：
+
+> 更正发货信息
+
+而不是无痕修改旧值。
+
+业务历史需要保留：
+
+~~~text
+第一次提交
+→ Carrier / Tracking A
+
+后续更正
+→ Carrier / Tracking B
+~~~
+
+当前有效值可以变为 B，但 A 仍然保留在历史中。
+
+是否仍处于 Walmart 允许更正的窗口：
+
+> 由 Walmart Adapter 根据当前平台规则判断。
+
+超过平台允许窗口时，ERP 不应假装仍然可以修改。
+
+---
+
+### 11.3 Walmart 拒绝发货时不能显示已发货
+
+如果 ERP 发起 Walmart Shipping，但 Walmart 返回拒绝 / 失败：
+
+> 平台订单状态不能因为“用户点过发货”就变成 Shipped。
+
+系统应保留：
+
+- 本次发货请求；
+- Walmart 返回结果；
+- 错误原因；
+- 当前真实订单状态。
+
+运营修正 Carrier / Tracking 等资料后，可以再次执行新的发货操作。
+
+旧失败记录继续保留。
+
+---
+
+### 11.4 同步 Walmart Return
+
+V1 支持从 Walmart 同步：
+
+- Return Order；
+- Return Line；
+- Quantity；
+- Return Reason；
+- Return Status；
+- Return Tracking；
+- Refund Status / Amount；
+- 其他平台可获得的售后事实。
+
+同一个 Walmart Return 持续更新同一条 ERP Return 记录。
+
+---
+
+### 11.5 Seller-Fulfilled Return 的人工处理
+
+对于 Walmart 当前允许 Seller 操作的 Seller-Fulfilled Return：
+
+ERP V1 支持有权限的人员执行：
+
+- Approve Return；
+- Reject Return；
+- Refund。
+
+但按钮 / 操作是否可用：
+
+> 必须根据当前 Return 类型、状态和 Walmart 实际 Capability 动态决定。
+
+不能对所有 Return 永远显示同一组操作。
+
+---
+
+### 11.6 WFS Return 只读
+
+Walmart Fulfillment Services（WFS）Return：
+
+> V1 只允许 View / Sync。
+
+不向卖家提供 Walmart 不允许的：
+
+- Approve；
+- Reject；
+- Seller-issued Refund。
+
+---
+
+### 11.7 退款支持有 Return 和无 Return 两种情况
+
+ERP 内业务上仍然只有统一的“退款”动作。
+
+退款可以：
+
+~~~text
+Order Line
+→ Refund
+~~~
+
+即没有 Return 直接退款；
+
+也可以：
+
+~~~text
+Return
+→ Refund
+~~~
+
+即针对已有 Return 退款。
+
+两种情况使用同一个 ERP Refund 业务体系。
+
+Walmart Adapter 根据实际场景调用平台当前允许的退款能力。
+
+---
+
+### 11.8 支持全额 / 部分 / 多数量退款
+
+V1 退款需要能够表达：
+
+- Full Refund；
+- Partial Refund；
+- Refund Quantity；
+- Refund Amount；
+- Refund Reason；
+- 对应 Order Line；
+- Return Reference（如果存在）。
+
+例如 Order Line 数量为 3，只退 2 件时：
+
+> ERP 必须知道退款数量是 2，不能默认所有 Partial Refund 都是 1 件。
+
+---
+
+### 11.9 退款前先判断当前可退款范围
+
+ERP 在提交退款前，应基于当前平台事实和 Walmart 规则判断：
+
+- 当前 Order Line 是否允许退款；
+- 当前可退款数量；
+- 当前剩余可退款金额；
+- Return / WFS 类型是否允许卖家执行退款。
+
+不能把明显超过剩余可退款金额 / 数量的请求直接当作正常业务输入。
+
+具体请求格式由开发实现。
+
+---
+
+### 11.10 退款失败保留历史，修正后重新发起
+
+例如：
+
+~~~text
+Refund Attempt 1
+→ Walmart Rejected
+→ 金额不合法
+
+Refund Attempt 2
+→ 修正金额后重新提交
+→ Success
+~~~
+
+正式确认：
+
+> 第二次操作不能把第一次失败记录覆盖成成功。
+
+ERP 必须同时保留：
+
+- 每次退款请求；
+- 请求数量 / 金额；
+- Walmart 返回结果；
+- 最终同步到的平台退款事实。
+
+---
+
+### 11.11 销售端退款与采购端退款继续分开
+
+Walmart Customer Refund：
+
+> 不自动等于 Amazon / Source Purchase 也要 Cancel / Refund。
+
+采购侧是否取消、退货、等待或进行其他处理：
+
+> 由 Procurement / Operations 根据真实情况决定。
+
+两侧资金和履约生命周期继续独立。
+
+---
+
+## 12. Walmart 发货 / 售后已确认原则
+
+24. Acknowledge 不固定属于 ERP 采购流程某一步，但 Walmart Shipping 本身要求订单已 Acknowledged。
+25. 已提交的 Carrier / Tracking 在 Walmart 当前允许窗口内可以更正；旧值必须保留历史。
+26. Walmart 拒绝发货时不能把 Platform Order Fact 标记成 Shipped。
+27. ERP 通用物流模型支持多个 Shipment / Tracking，但 Walmart US 多包裹写入能力当前待实测确认。
+28. Seller-Fulfilled Return 按 Walmart 实际能力支持 View / Approve / Reject / Refund。
+29. WFS Return 只允许 View / Sync，不提供 Seller Approve / Reject / Refund。
+30. Refund 统一建模，可以有关联 Return，也可以没有 Return。
+31. V1 支持 Full / Partial Refund，并支持多数量 Order Line 的 Refund Quantity。
+32. 退款前应判断当前剩余可退款数量 / 金额和平台可操作条件。
+33. 退款失败历史不能被后续成功请求覆盖。
+34. Walmart Refund 与 Source Purchase Cancel / Refund 不自动联动。
+35. Return / Refund 最终平台事实仍由 Walmart 后续同步 / 回读确认。
+
+---
+
+## 13. 下一批
 
 下一批继续确认：
 
-> **发货信息修正、Walmart 发货失败、Return / Refund 售后操作**
+> **结算、利润、风险处理相关正式业务动作**
 
 重点包括：
 
-- Tracking 填错后怎么修；
-- 已经提交 Walmart 的 Tracking 是否保留旧历史；
-- Walmart 拒绝发货时订单怎么显示；
-- 同步 Return；
-- Approve / Reject Return；
-- Full / Partial Refund；
-- Refund without Return；
-- 退款金额填错或平台拒绝后的处理；
-- 售后与采购侧取消 / 退款的关系。
+- 拉取 / 导入结算数据；
+- 当前预计利润与对账后利润；
+- 财务结果重新计算；
+- 店铺回款 / Payment Statement；
+- 商品 / 品牌 / Seller 风险查询；
+- 风险命中后的人工处理；
+- 黑名单 / 白名单维护；
+- 在线 Listing 风险扫描。
