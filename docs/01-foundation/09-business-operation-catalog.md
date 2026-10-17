@@ -363,23 +363,441 @@ Seller、Price、Stock、Fulfillment、Delivery 等变化：
 
 ---
 
-## 5. 下一批
+## 5. Listing 相关业务动作
+
+### 5.1 创建 Listing 草稿
+
+当 Product 已确定目标销售平台后，可以创建 Listing 草稿。
+
+草稿阶段：
+
+- Store 可以暂时未确定；
+- SKU / UPC / GTIN 可以尚未准备完成；
+- Price / Inventory 可以尚未确定；
+- Platform Resource 可以尚未选择；
+- Listing 资料可以继续编辑。
+
+草稿后续进入正式 Listing 时：
+
+> 保持同一个 ERP Listing Identity。
+
+---
+
+### 5.2 选择 / 更换 Listing 所属店铺
+
+Listing 真正提交平台前必须确定 Store。
+
+在 Draft 阶段选择 Store：
+
+> 不创建新的 Listing。
+
+如果平台业务允许后续调整相关 Store 归属，必须按照平台和业务规则处理；不能简单通过改一个字段让历史归属失真。
+
+---
+
+### 5.3 保存 Listing 资料
+
+运营、AI 或其他业务能力可以修改并保存 ERP 中准备的 Listing 资料，例如：
+
+- Title；
+- Brand；
+- Description；
+- Images；
+- Product Type；
+- Attributes；
+- SKU；
+- UPC / GTIN；
+- 其他平台字段。
+
+正式确认：
+
+> **保存 ERP 资料 ≠ 立即提交 Walmart。**
+
+保存后可以继续：
+
+- 人工修改；
+- AI 优化；
+- 资料检查；
+- 批量处理；
+- 等待最终确认。
+
+不能因为用户点击“保存”，就默认立刻修改线上 Walmart Listing。
+
+---
+
+### 5.4 检查 Listing 资料
+
+在正式提交前，ERP 应能够检查当前准备的资料是否满足目标平台要求。
+
+检查结果可以是：
+
+- 可提交；
+- 缺少资料；
+- 存在可修复问题；
+- 存在风险 / 合规问题；
+- 需要人工处理。
+
+对 Walmart：
+
+> 检查必须基于当时正式使用的 Walmart Spec Version。
+
+资料检查本身不等于已经提交平台。
+
+---
+
+### 5.5 创建全新的 Walmart Listing
+
+表示明确选择：
+
+> 在 Walmart 创建一个新的 Listing / 商品销售关系。
+
+它和“通过 UPC / GTIN 匹配 Walmart 已有商品”是两种不同业务意图。
+
+如果创建失败：
+
+> 不允许系统静默改成“跟卖”再尝试。
+
+---
+
+### 5.6 通过 UPC / GTIN 匹配 Walmart 已有 Listing
+
+即当前业务中的“跟卖”。
+
+表示：
+
+> 通过 UPC / GTIN 等标识匹配 Walmart 已有 Catalog 商品，并为当前 Store 建立销售关系。
+
+如果跟卖失败：
+
+> 不允许系统静默改成“创建全新 Listing”。
+
+系统可以帮助搜索、推荐和提示匹配结果，但最终上架方式必须明确。
+
+因此：
+
+~~~text
+创建全新 Listing
+≠
+UPC / GTIN 跟卖
+~~~
+
+---
+
+### 5.7 修复资料后重新提交
+
+如果一次 Listing 提交失败，例如：
+
+~~~text
+第一次提交
+→ Walmart 返回缺少 Material
+~~~
+
+运营修复资料后：
+
+~~~text
+形成新的 Listing 资料版本
+→ 再次提交
+~~~
+
+正式确认：
+
+> 旧的失败记录不能被新的提交结果覆盖。
+
+历史应能看到：
+
+~~~text
+Submission 1
+→ Failed
+→ 原因
+
+Submission 2
+→ Success / Failed / Pending
+~~~
+
+---
+
+### 5.8 修改已经在线的 Listing 内容
+
+已经在线的 Listing，如果目标平台允许，可以修改：
+
+- Title；
+- Brand；
+- Description；
+- Images；
+- Attributes；
+- Product Type；
+- SKU / UPC / GTIN；
+- 其他平台允许修改的内容。
+
+业务上仍然遵守：
+
+~~~text
+先修改 / 保存 ERP 准备资料
+↓
+检查
+↓
+明确提交平台
+~~~
+
+保存资料和提交平台是两个动作。
+
+---
+
+### 5.9 修改售价
+
+ERP 可以修改单个或批量 Listing 的目标售价。
+
+必须区分：
+
+~~~text
+ERP 目标售价
+≠
+Walmart 当前真实售价
+~~~
+
+提交修改以后，只有真实查询 Walmart 后看到平台价格达到目标，才说明平台实际生效。
+
+具体多久查询、如何重试由开发设计。
+
+---
+
+### 5.10 修改库存
+
+ERP 可以：
+
+- 修改默认 Walmart 节点库存；
+- 修改指定节点库存；
+- 一次修改多个节点；
+- 批量修改多个 Listing 的节点库存。
+
+必须区分：
+
+- 来源库存；
+- 某节点可选最大库存设置；
+- ERP 目标节点库存；
+- Walmart 实际节点库存。
+
+某个节点失败不应覆盖其他已经成功节点的结果。
+
+---
+
+### 5.11 修改 Listing 使用的平台资源
+
+例如：
+
+- Fulfillment Center / Ship Node；
+- Shipping Template；
+- Shipping Override；
+- 其他平台允许的资源关联。
+
+如果用户明确选择了某个资源，但该资源已经无效：
+
+> 不能偷偷改用其他资源或 Default。
+
+只有明确选择“使用平台默认配置”时，才允许平台采用 Default。
+
+---
+
+### 5.12 库存设为 0
+
+库存设为 0 是库存操作。
+
+它不等于：
+
+- Listing 停用；
+- Listing 删除；
+- Product 退出；
+- ERP 历史关系删除。
+
+库存恢复以后 Listing 可以继续销售，只要平台状态允许。
+
+---
+
+### 5.13 停用 Listing
+
+“停用”表示：
+
+> 主动停止当前 Listing 的销售，但 Listing 仍保留在 Walmart 后台。
+
+停用成功后，ERP 仍保留同一 Listing 的历史。
+
+---
+
+### 5.14 恢复已停用 Listing 的销售
+
+对于“停用”的 Listing：
+
+> 恢复动作统一叫“恢复销售”。
+
+恢复销售与重新创建新的 Listing 不是同一件事。
+
+业务历史应该能看到：
+
+~~~text
+Online
+→ 停用
+→ 恢复销售
+~~~
+
+保持连续。
+
+---
+
+### 5.15 删除 Listing
+
+“删除”与“停用”是两个不同动作。
+
+删除表示：
+
+> 向平台请求删除当前 Listing / SKU 销售关系。
+
+Delete 属于高风险业务操作。
+
+删除平台 Listing：
+
+- 不删除 ERP Product；
+- 不删除历史订单；
+- 不删除历史 Listing 记录；
+- 不删除过去的 Submission / Error / Profit 等历史。
+
+---
+
+### 5.16 删除后重新上架
+
+Listing 已删除以后，如果以后重新销售：
+
+> 业务上统一叫“重新上架”。
+
+不能把它叫成“恢复销售”。
+
+因此：
+
+~~~text
+停用
+→ 恢复销售
+
+删除
+→ 重新上架
+~~~
+
+两条业务语义必须分开。
+
+重新上架时历史必须能够追踪到原来曾经删除的 Listing。
+
+---
+
+### 5.17 同步 Walmart 当前 Listing 状态与资料
+
+ERP 需要能够主动从 Walmart 读取当前真实状态，例如：
+
+- Published / Unpublished / Retired / Deleted；
+- 当前 Title / Brand / Description / Images / Attributes；
+- 当前 Price；
+- 当前各 Ship Node Inventory；
+- 当前 Platform Resource Association；
+- 其他可读取的平台事实。
+
+这些读取结果表示：
+
+> **Walmart 当前真实观察值。**
+
+普通用户不能直接把这些平台事实随意改成另一个值。
+
+---
+
+### 5.18 ERP 准备资料与 Walmart 实际资料分开
+
+正式确认：
+
+~~~text
+ERP 当前准备 / 希望提交的 Listing 资料
+≠
+Walmart 当前真实读取到的 Listing 资料
+~~~
+
+例如：
+
+~~~text
+ERP 目标标题：
+Rechargeable Wireless Desk Lamp
+
+Walmart 当前标题：
+Wireless Desk Lamp
+~~~
+
+ERP 不能因为同步到了 Walmart 当前标题，就无痕覆盖运营正在准备的目标版本。
+
+系统需要同时能够回答：
+
+- ERP 当前准备提交什么；
+- Walmart 当前实际是什么；
+- 两者是否一致；
+- 最近一次提交结果是什么。
+
+---
+
+### 5.19 查看并处理 Listing 错误
+
+Listing 可能出现：
+
+- 首次上架失败；
+- 修改资料失败；
+- Price / Inventory 未达到目标；
+- Published 后 Unpublished；
+- Platform Resource 无效；
+- Policy / Compliance / IP 风险；
+- Unknown Error。
+
+ERP 应允许：
+
+- 查看 Walmart 原始错误；
+- 查看系统归类；
+- 修复资料；
+- 重新检查；
+- 再次提交；
+- 转人工；
+- 进入 Risk / Compliance；
+- 停用 / 删除等后续处理。
+
+具体 HTTP Retry / Backoff 等技术机制由开发负责，不属于业务动作定义。
+
+---
+
+## 6. Listing 已确认原则
+
+1. 保存 Listing 资料和提交 Walmart 是两个不同动作。
+2. 创建全新 Listing 与 UPC / GTIN 跟卖必须明确区分，失败后不能静默互换。
+3. 每次正式提交都保留独立历史；修复后重新提交不能覆盖旧失败记录。
+4. Listing 资料的重要修改形成新的内容版本，并可还原每次提交使用的是哪一版。
+5. 停用后叫“恢复销售”；删除后叫“重新上架”，两者不能混用。
+6. 删除 Walmart Listing 不删除 ERP Product 和历史业务记录。
+7. ERP 当前准备 / 希望提交的 Listing 资料，与 Walmart 当前真实读取到的资料分开。
+8. Walmart 同步结果不能无痕覆盖 ERP 正在准备的目标资料。
+9. Price / Inventory 的目标值与平台真实值分开。
+10. Explicit Platform Resource 失效时不能静默退回 Default。
+11. Listing 状态、提交结果、平台真实状态继续保持分开。
+12. Listing 错误处理保留 Walmart 原始错误与后续处理历史。
+
+---
+
+## 7. 下一批
 
 下一批继续确认：
 
-> **Listing 相关正式业务动作**
+> **订单与采购相关正式业务动作**
 
 重点包括：
 
-- 创建 Listing 草稿；
-- 检查 Listing 资料；
-- 创建全新 Walmart Listing；
-- 通过 GTIN / UPC 匹配已有 Listing；
-- 修改 Listing 内容；
-- 修改售价；
-- 修改多节点库存；
-- 修改 Shipping Template / 节点关联；
-- 停用；
-- 删除；
-- 同步平台状态；
-- 处理上架 / 维护错误。
+- 同步订单；
+- 查看订单详情；
+- Acknowledge；
+- 执行订单审核；
+- 取消订单行；
+- 创建采购任务；
+- 分配 / 领取采购任务；
+- 记录实际采购；
+- 拆分采购；
+- 重新采购；
+- 采购取消 / 退款；
+- 发货；
+- 订单与采购异常处理。
