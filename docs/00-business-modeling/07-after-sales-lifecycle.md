@@ -9,7 +9,7 @@
 
 当前团队真正需要的是：
 
-> 从 Walmart 拉取可通过 API 获得的售后数据，将其与原 Sales Order / Order Line 关联，让运营识别哪些售后需要处理，执行 Refund，并持续同步最终 Return / Refund 结果。
+> 从 Walmart 拉取可通过 API 获得的售后数据，将其与原 Sales Order / Order Line 关联，让运营识别哪些售后需要处理，并在平台允许范围内执行 Approve / Reject / Refund，再持续同步最终 Return / Refund 结果。
 
 当前阶段不建设：
 
@@ -329,7 +329,7 @@ Sales Order 仍然需要存在：
 17. ERP 内售后阶段的财务影响只是估算。
 18. Settlement / Recon 到达以后才形成准确财务结果。
 19. After-sales Window 需要存在，但阶段 0 不定义具体天数。
-20. 售后模块保持简单，优先解决“拉取、关联、识别待处理、退款、同步结果”。
+20. 售后模块保持简单，优先解决“拉取、关联、识别待处理、按平台能力执行 Return / Refund 操作、同步结果”。
 
 ---
 
@@ -341,7 +341,7 @@ Sales Order 仍然需要存在：
 
 而是：
 
-> **把 Walmart 的售后订单拉回来，准确关联原销售订单，让运营知道哪些需要退款处理，并持续获取最终 Return / Refund 结果。**
+> **把 Walmart 的售后订单拉回来，准确关联原销售订单，让运营知道哪些需要处理，并按当前平台能力执行 Seller-Fulfilled Return / Refund 动作，再持续获取最终 Return / Refund 结果。**
 
 核心关系：
 
@@ -365,7 +365,7 @@ Accurate Financial Result
 
 因此 V1 售后模块应保持简单：
 
-> **数据同步 + 订单关联 + 待处理识别 + Refund 操作 + 状态跟踪。**
+> **数据同步 + 订单关联 + 待处理识别 + Seller-Fulfilled Return 可用操作 + Refund + 状态跟踪；WFS Return 保持只读。**
 
 复杂客户沟通、CRM、工单协作不属于当前核心范围。
 
