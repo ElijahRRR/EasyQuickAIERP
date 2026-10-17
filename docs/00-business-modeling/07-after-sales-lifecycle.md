@@ -1,4 +1,4 @@
-# After-sales Lifecycle（售后生命周期）v0.3
+# After-sales Lifecycle（售后生命周期）v0.4
 
 > 状态：阶段 0 已确认业务基线  
 > 目标：定义 ERP 在售后域真正需要管理的平台事实、运营动作与财务影响边界。
@@ -368,3 +368,124 @@ Accurate Financial Result
 > **数据同步 + 订单关联 + 待处理识别 + Refund 操作 + 状态跟踪。**
 
 复杂客户沟通、CRM、工单协作不属于当前核心范围。
+
+
+---
+
+## 17. Walmart Return / Refund 平台能力补充
+
+以下规则基于当前 Walmart Marketplace API 能力确认。
+
+### 17.1 Seller-Fulfilled Return
+
+对于 Walmart 当前允许卖家处理的 Seller-Fulfilled Return，ERP V1 支持：
+
+- View / Sync；
+- Approve；
+- Reject；
+- Refund。
+
+但是：
+
+> 是否能执行 Approve / Reject / Refund，必须根据当前 Return 类型、状态和 Walmart 实际能力动态判断。
+
+不能对所有 Return 固定显示同一组操作。
+
+### 17.2 WFS Return
+
+Walmart Fulfillment Services（WFS）Return 当前为：
+
+> **View / Sync Only**
+
+ERP 不向卖家提供 Walmart 不允许的：
+
+- Approve；
+- Reject；
+- Seller-issued Refund。
+
+### 17.3 Refund 可以没有 Return
+
+Walmart 存在：
+
+- Order / Order Line 直接退款；
+- 针对已有 Return 的退款。
+
+因此 ERP 仍使用统一 Refund 业务对象：
+
+~~~text
+Refund
+├ Order Line = required
+└ Return = optional
+~~~
+
+不能因为 Walmart 有不同 API 路径，就建立两个互不兼容的 ERP Refund 对象。
+
+### 17.4 Full / Partial / Quantity Refund
+
+V1 退款需要能够表达：
+
+- Full Refund；
+- Partial Refund；
+- Refund Quantity；
+- Refund Amount；
+- Refund Reason；
+- Order Line；
+- Return Reference（如果存在）。
+
+对于多数量 Order Line：
+
+> Partial Refund 必须明确退款数量。
+
+不能默认 Partial Refund 永远只退 1 件。
+
+### 17.5 退款前业务校验
+
+在向 Walmart 提交 Refund 前，ERP 应基于当前平台事实判断：
+
+- Order Line 当前是否允许退款；
+- 当前剩余可退款数量；
+- 当前剩余可退款金额；
+- Return / Fulfillment Type 是否允许 Seller 执行 Refund。
+
+明显超出剩余可退款范围的请求不应作为正常业务请求直接提交。
+
+### 17.6 Refund Request 与 Platform Refund Fact 分开
+
+ERP 发起 Refund：
+
+> 不等于 Walmart 已经完成退款。
+
+如果 Walmart Reject：
+
+- 保留本次失败请求；
+- 保存失败原因；
+- 重新同步当前 Order / Return / Refund Fact；
+- 允许运营修正数量 / 金额 / 原因后再次发起新的 Refund。
+
+后续成功不能把旧失败历史覆盖。
+
+### 17.7 销售端退款与采购端资金处理分开
+
+Walmart Customer Refund：
+
+> 不自动驱动 Source Purchase Cancel / Refund。
+
+采购侧是否取消、退款、退货或等待：
+
+> 由 Procurement / Operations 根据真实来源状态决定。
+
+Sales After-sales 与 Procurement 继续保持独立生命周期。
+
+---
+
+## 18. 新增确认原则
+
+21. Seller-Fulfilled Return 在 Walmart 当前允许范围内支持 View / Approve / Reject / Refund。
+22. WFS Return 只支持 View / Sync。
+23. Refund 统一建模，可以关联 Return，也可以不关联 Return。
+24. V1 支持 Full Refund、Partial Refund 和多数量退款。
+25. Partial Refund 必须能够表达实际退款 Quantity。
+26. Refund 前需要判断当前剩余可退款数量 / 金额和平台可操作条件。
+27. Refund Request 与 Walmart 最终 Refund Fact 分开。
+28. Refund 失败历史不能被后续成功覆盖。
+29. Walmart Refund 与 Source Purchase Cancel / Refund 不自动联动。
