@@ -1,4 +1,4 @@
-# 对账与利润生命周期业务模型 v0.1
+# 对账与利润生命周期业务模型 v0.2
 
 > 状态：已确认  
 > 所属阶段：ERP 阶段 0 — 业务建模
@@ -784,3 +784,102 @@ Cumulative Payout
 ```
 
 > **利润衡量订单是否赚钱；回款衡量 Walmart 实际向店铺结算了多少钱。两套指标相关，但不能混为一个概念。**
+
+
+---
+
+## 39. 财务结果不可直接人工改写
+
+正式确认：
+
+> Estimated Profit 和 Current Reconciled Profit 都是计算结果，不是普通运营可以直接手工修改的业务事实。
+
+如果利润结果不正确，应修正导致结果错误的原始信息，例如：
+
+- Purchase Amount / Purchase Refund；
+- Logistics Cost；
+- Cost Coefficient；
+- Settlement Entry；
+- 其他已确认成本事实；
+
+然后由 ERP 重新计算。
+
+不能通过“直接改利润数字”解决错误数据。
+
+---
+
+## 40. Walmart 账单 / 回款属于平台财务事实
+
+Walmart 返回的：
+
+- Settlement Entry；
+- Settlement Period Total Payable；
+- Payment Statement；
+- Payout / Financial Observation；
+
+不能由普通用户直接修改成另一个数字。
+
+如果发现不一致：
+
+- 重新同步平台数据；
+- 保留原始平台事实；
+- 允许内部备注 / 核对；
+
+但不人工改写 Walmart Platform Financial Fact。
+
+---
+
+## 41. 第三方物流费用允许人工登记与纠错
+
+V1 支持人工登记真实第三方物流费用。
+
+如果录入错误：
+
+> 可以修正，但必须保留修改历史。
+
+需要能够追踪：
+
+- 修改前金额；
+- 修改后金额；
+- 修改人；
+- 修改时间；
+- 修改原因（适用时）。
+
+物流费用变化后，相关预计利润和当前对账利润继续按规则重新计算。
+
+---
+
+## 42. Cost Policy / Coefficient 需要历史生效范围
+
+例如：
+
+~~~text
+Jan-Oct
+Accounting Procurement Cost = Actual Purchase Amount × 1.02
+
+Nov onward
+Accounting Procurement Cost = Actual Purchase Amount × 1.03
+~~~
+
+正式确认：
+
+> 修改当前 Cost Policy / Coefficient 不应无痕重写过去已经发生业务所适用的旧规则。
+
+系统需要能够知道：
+
+- 某个规则何时生效；
+- 何时被新规则替代；
+- 适用于哪些 Store / Procurement Context。
+
+历史业务原则上按当时有效规则解释。
+
+---
+
+## 43. 新增确认原则
+
+30. Estimated Profit 和 Current Reconciled Profit 不能由普通用户直接改写。
+31. 利润异常时应修正原始业务事实 / 成本后重新计算。
+32. Walmart Settlement / Payout 等平台财务事实不能由普通用户直接修改。
+33. V1 支持人工录入第三方物流费用。
+34. 第三方物流费用纠错必须保留修改历史。
+35. Cost Policy / Coefficient 修改需要生效历史，不能无痕改写过去业务。
