@@ -135,7 +135,7 @@ AI、Workflow、前端人工操作最终应复用相同的 ERP Business Operatio
 | [对账与利润生命周期](./08-reconciliation-profit-lifecycle.md) | v0.2 | Order Line 级预计利润、实际采购成本、跨账期 Settlement、Current Reconciled Profit 与 Store Payout |
 | [店铺生命周期](./09-store-lifecycle.md) | v0.4 | Store 平台身份、三类独立状态、连接关系、经营配置、解绑与历史负责人/运营组归属 |
 | [Team / User / Permission / Organization](./10-team-user-permission-organization.md) | v0.3 | Team 隔离、Group、Store Assignment、Platform/Store/Function/Action 权限、Role Template 与 Digital Employee |
-| [Risk Intelligence / Blacklist](./11-risk-intelligence-blacklist.md) | v0.3 | Brand / Product / Seller 风险、System Public / Team Private / Whitelist 优先级与 Workflow 边界 |
+| [Risk Intelligence / Blacklist](./11-risk-intelligence-blacklist.md) | v0.4 | Brand / Product / Seller 风险、System Public / Team Private / Whitelist 优先级与 Workflow 边界 |
 | [阶段 0 收口审查](./12-stage-0-closure-review.md) | v1.1 | 统一修订旧结论、确认阶段 0 核心不变量并正式关闭 Baseline v1 |
 
 ---
