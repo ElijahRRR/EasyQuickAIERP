@@ -1741,11 +1741,381 @@ Delete Listing
 
 ---
 
-## 15. 下一步
+## 15. 收口审查补充的正式业务动作
 
-Business Operation Catalog 已覆盖主要经营域。
+以下动作均来自已经确认的阶段 0 / Walmart Capability 基线，不是新增业务规则。
 
-当前还需要补齐两件事：
+### 15.1 确定 Product 的目标销售平台
 
-1. 确认当前 Team 的风险自动下架具体使用哪一种 Walmart 动作；
-2. 做一次完整收口审查，确认是否还有遗漏的正式业务动作，再决定是否把本清单标记为 Baseline。
+Product 可以被选择进入一个或多个 Marketplace。
+
+选择目标平台：
+
+> 不等于已经创建 Listing，也不等于已经分配 Store。
+
+后续可以基于目标平台创建 Listing Draft。
+
+---
+
+### 15.2 计算店铺推荐
+
+如果 Team 启用了店铺分配能力，ERP 可以根据 Team 自己的规则计算 Store Recommendation。
+
+规则可以包括：
+
+- 价格区间；
+- 配送方式；
+- 类目；
+- 来源质量；
+- 店铺销量 / 销售额；
+- 商品结构；
+- 其他 Team 定义的经营指标。
+
+系统只能执行 Team 已配置的规则，不能自己发明经营策略。
+
+---
+
+### 15.3 确认 / 批量确认商品店铺分配
+
+Store Recommendation 只是建议。
+
+正式 Store Assignment 可以来自：
+
+- 人工指定；
+- 人工确认推荐；
+- 批量确认；
+- Team 明确配置的自动接受规则。
+
+当前 Team 的商品 / 品牌占用限制属于 Team Policy，不是 ERP 全局约束。
+
+---
+
+### 15.4 同步 Walmart 平台资源
+
+ERP V1 需要能够同步 Store 当前可用的 Walmart Platform Resource，例如：
+
+- Fulfillment Center / Ship Node；
+- Shipping Template；
+- Return Center；
+- 其他平台可读取资源。
+
+同步结果属于 Walmart 平台事实。
+
+---
+
+### 15.5 创建 / 修改 / 停用或删除 Walmart 平台资源
+
+只要 Walmart 当前 API 和账号能力支持，ERP 可以按权限提供：
+
+- Create；
+- Update；
+- Delete / Deactivate；
+- Sync。
+
+这些操作适用于 Ship Node、Shipping Template、Return Center 等具体平台资源。
+
+如果平台只支持部分能力：
+
+> ERP 只暴露真实存在的能力，不虚构按钮。
+
+---
+
+### 15.6 查询 / 同步物流状态
+
+ERP 可以对 Team 纳入管理且实际可观察的数据执行：
+
+- 查询 Source Shipment；
+- 查询 Carrier Tracking；
+- 同步 Walmart Platform Shipment；
+- 同步 Delivered 等平台事实。
+
+无法观察的数据保持 Unknown / Unobservable，不能伪造状态。
+
+---
+
+### 15.7 识别 Delay / Lost 风险
+
+在具备足够数据时，ERP 可以执行：
+
+- Delay Risk Detection；
+- Delay Detection；
+- Suspected Lost；
+- Confirmed Lost；
+- Tracking Data Problem 识别。
+
+具体阈值和后续处理由 Team Policy / Workflow 决定。
+
+识别物流风险：
+
+> 不自动等于 Refund、Cancel 或 Re-purchase。
+
+这些仍是后续独立业务动作。
+
+---
+
+### 15.8 物流状态核对
+
+如果 Team 希望，ERP 可以对当前可观察的：
+
+- Source Shipment；
+- Carrier Tracking；
+- Walmart Platform State；
+
+进行状态核对。
+
+核对结果必须诚实表达：
+
+- Fully Reconciled；
+- Partially Observed；
+- Unknown / Unobservable；
+
+不能为了“闭环”制造不存在的物流关系。
+
+---
+
+### 15.9 创建 / 邀请 Team 用户
+
+已有 Team 的新成员必须由具有成员管理权限的人员：
+
+- Invite；
+- 或创建账号。
+
+用户不能自行注册后直接加入别人的 Team。
+
+---
+
+### 15.10 停用用户访问
+
+用户离职或不再允许登录时，可以：
+
+- Disable Login；
+- Remove Active Access；
+- Remove Store Assignment；
+- Remove Group Membership。
+
+但：
+
+> 不能删除该用户过去已经产生的业务操作历史。
+
+---
+
+### 15.11 创建 / 修改 Group
+
+Team 可以创建 Group，并维护成员关系。
+
+Group 只表示组织分组：
+
+> **Group Membership 不自动产生权限。**
+
+---
+
+### 15.12 创建 / 修改权限模板
+
+Team Administrator 可以建立可复用的 Permission Template，例如：
+
+- 普通运营；
+- 采购；
+- 财务；
+- 管理员自定义模板。
+
+权限模板只是快速配置工具，不是组织岗位。
+
+---
+
+### 15.13 授予 / 撤销具体权限
+
+ERP 必须能够按实际授权控制：
+
+~~~text
+Actor
++ Platform
++ Store Scope
++ Function
++ Action
+~~~
+
+例如：
+
+~~~text
+User A
+Walmart
+Store A / Store B
+Refund
+Allowed
+~~~
+
+Store Assignment 与 Permission 必须分开。
+
+---
+
+### 15.14 发起 Walmart Report Request
+
+V1 可以由人工或定时任务发起 ERP 自己管理的 Walmart Report Request。
+
+需要区分：
+
+~~~text
+ERP Job
+≠
+Walmart Report Request
+≠
+Downloaded Raw Report
+≠
+Parsed Business Record
+~~~
+
+Walmart 自带 Report Scheduler 不进入 V1。
+
+---
+
+### 15.15 同步 Settlement / Payment Statement
+
+ERP 可以人工触发或定时：
+
+- 拉取 Recon / Settlement；
+- 拉取 Payment Statement；
+- 解析账单；
+- 更新 Settlement Period / Entry；
+- 更新 Store Financial Observation。
+
+人工触发和定时触发调用相同底层业务能力。
+
+---
+
+### 15.16 同步 Seller Performance / Program Status
+
+ERP 可以人工或定时同步 Walmart：
+
+- Seller Performance；
+- Problem Detail；
+- Seller Program Status；
+- 其他可读取绩效 / 项目状态。
+
+默认处理是：
+
+~~~text
+同步
+→ 发现问题
+→ 告警 / 待处理
+→ 人工查看
+~~~
+
+不会因为某个绩效指标异常就默认自动 Delete Listing、改价、改库存或停用 Store。
+
+如 Team 需要自动动作，再由 Workflow 明确配置。
+
+---
+
+### 15.17 外部采购团队周期性对账
+
+如果 Procurement Task 由外部采购团队执行，ERP 可以按周期建立采购侧对账。
+
+对账可以关联：
+
+- Purchase；
+- Quantity；
+- Amount；
+- Shipment Evidence；
+- 外部采购结算状态。
+
+该结算：
+
+> 与 Walmart Settlement 完全不同。
+
+也不等于 Purchase 自身的 Shipped / Delivered 状态。
+
+---
+
+### 15.18 保存外部采购发货凭证
+
+外部采购 Purchase 可以保存一个或多个真实 Evidence，例如：
+
+- Order Details；
+- Track Package；
+- 其他采购 / 发货凭证。
+
+Evidence：
+
+> 不等于可持续查询的 Tracking Feed。
+
+---
+
+### 15.19 维护 System Public Blacklist
+
+系统运营方可以维护 System Public Blacklist，包括：
+
+- 人工添加；
+- 停用 / 更新；
+- 从明确规则产生的风险记录沉淀；
+- 审查 Team 私有风险并选择提升为公共记录。
+
+Team 普通成员不能因为有 Team Private Blacklist 权限，就自动获得 System Public Blacklist 管理权。
+
+---
+
+## 16. 收口审查结果
+
+截至当前，正式业务动作已经覆盖：
+
+- Team / User / Permission；
+- Store；
+- Walmart Platform Resource；
+- Product；
+- Product Source；
+- Product Audit；
+- Store Assignment；
+- Listing；
+- Price / Inventory；
+- Platform Error；
+- Order；
+- Procurement；
+- Logistics；
+- Return / Refund；
+- Settlement / Profit；
+- Seller Performance；
+- Risk / Blacklist。
+
+同时确认以下内容**不是独立业务动作**，不需要为了“清单完整”强行建按钮：
+
+- Job 技术重试；
+- HTTP Retry；
+- Feed 自动拆分；
+- Queue / Worker；
+- Correlation ID；
+- 数据库归档 / 索引；
+- 平台当前 State 本身；
+- 计算出来的 Profit 本身。
+
+这些分别属于：
+
+- 技术执行；
+- 平台事实；
+- 派生结果。
+
+---
+
+## 17. 当前仅剩的收口检查点
+
+目前没有发现新的核心业务域缺失。
+
+在把 Business Operation Catalog 标记为 Baseline 前，还需要最后确认：
+
+> **这份清单是否应该把“所有正式业务动作默认都支持单条操作，同时对适合批量处理的动作提供批量入口”作为 ERP 通用原则。**
+
+例如：
+
+- 批量商品审核；
+- 批量店铺分配；
+- 批量 Listing Submit；
+- 批量改价；
+- 批量库存；
+- 批量 Delete；
+- 批量风险扫描。
+
+批量入口只是在一次操作中选择多个目标：
+
+> 不建立第二套“批量业务逻辑”。
+
+每一个目标仍然按照同一个正式业务动作、权限、校验、审计和结果处理。
+
+如果确认这一点，Business Operation Catalog 就可以进入最终 Baseline 收口。
