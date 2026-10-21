@@ -1,4 +1,4 @@
-# Risk Intelligence / Blacklist Model v0.3
+# Risk Intelligence / Blacklist Model v0.4
 
 > 状态：已确认  
 > 所属阶段：ERP 阶段 0 — 业务建模
@@ -380,11 +380,31 @@ Risk Intelligence 只提供风险事实。
 
 > 当前 Team 在线风险命中后要自动下架。
 
-但当前 Team 最终采用哪一种 Walmart 下架动作：
+并且当前 Team 对 Walmart 的自动下架动作明确为：
 
-> **仍待单独确认。**
+> **Delete / 删除 Listing。**
 
-在该规则明确以前，系统 / 开发不能自行把“自动下架”解释成 Delete、Retire 或 Inventory Zero。
+因此当前 Team 的自动风险处理是：
+
+~~~text
+Online Listing
+↓
+Risk Scan
+↓
+Effective Risk Match
+↓
+Current Team Policy 判断需要自动下架
+↓
+Delete Listing
+~~~
+
+Delete 仍然是高风险正式业务动作，必须经过对应 Actor Permission、Business Validation、Audit 和平台结果追踪。
+
+Delete 只删除 Walmart 当前 Listing / SKU 销售关系：
+
+> 不删除 ERP Product、Listing 历史、Order、Purchase、Refund、Settlement、Audit 等历史数据。
+
+其他 Team 不继承这一策略，可以自行选择只提醒、人工处理、Inventory Zero、Retire、Delete 或其他 Workflow。
 
 ---
 
@@ -425,7 +445,7 @@ Amazon Seller Blacklist 主要影响：
 12. Audit 可以查询 Blacklist，但 Audit Reject 不自动写入 Blacklist。
 13. 当前团队上架前命中有效黑名单时，Workflow 直接 Reject。
 14. 在线商品命中新风险时，先形成 Risk Match；当前 Team 选择自动执行下架动作，其他 Team 自行配置提醒 / 人工 / 自动策略。
-15. 自动下架属于 Team Workflow，不是 Risk Intelligence 固定动作；Walmart 的具体下架方式（库存 0 / 停用 / 删除）必须明确，不能由系统自行猜测。
+15. 自动下架属于 Team Workflow，不是 Risk Intelligence 固定动作；当前 Team 对 Walmart 的自动下架明确使用 Delete / 删除，其他 Team 自行配置。
 16. Seller Blacklist 主要作用于 Source / Procurement Selection。
 17. Brand / Product Blacklist 主要作用于 Product Audit 与 Online Listing Risk。
 18. 系统运营方可以选择将 Team 风险记录提升到 System Public Blacklist。
