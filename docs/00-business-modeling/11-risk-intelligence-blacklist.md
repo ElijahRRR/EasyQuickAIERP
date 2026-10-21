@@ -1,4 +1,4 @@
-# Risk Intelligence / Blacklist Model v0.2
+# Risk Intelligence / Blacklist Model v0.3
 
 > 状态：已确认  
 > 所属阶段：ERP 阶段 0 — 业务建模
@@ -315,46 +315,76 @@ Reject
 
 ## 12. 在线商品命中新风险
 
-如果商品已经在线，后来新增：
+如果商品已经在线，后来命中新的有效风险：
 
 - Brand Blacklist；
 - Product Blacklist；
+- 已确认 TRO；
+- Target Platform 明确禁售；
+- 其他 Team 定义需要处理的 Risk Match；
 
-当前团队默认：
+ERP 首先形成：
 
-```text
-New Effective Risk Match
-↓
-Pending / Operational Recommendation
-↓
-Operations Decision
-```
+> 当前 Risk Match / Effective Risk Result。
 
-即先产生：
+然后根据具体 Team 的 Risk Policy / Workflow 决定后续动作。
 
-> 待处理风险建议 / 运营建议。
+### 当前 Team
 
-不会因为 Risk Intelligence 更新本身就强制所有 Team 自动下架。
+当前 Team 已确认：
 
----
+> **在线商品扫描发现需要下架的风险后，自动执行下架动作，而不是只提醒人工。**
 
-## 13. 自动下架属于 Workflow
-
-如果某个 Team 希望：
+也就是说当前 Team 的 Workflow 可以采用：
 
 ```text
 Online Listing
 ↓
-Blacklist Hit
+Risk Scan
 ↓
-Automatic Take Down / Exit
+Effective Risk Match
+↓
+Automatic Take-down Operation
 ```
 
-可以通过 Team Workflow 配置。
+### 其他 Team
+
+其他 Team 可以自行配置：
+
+- 只提醒；
+- 人工审核后处理；
+- 自动下架；
+- 其他 Workflow。
 
 因此：
 
-> Risk Intelligence 提供风险事实；Workflow 决定命中以后执行什么动作。
+> 当前 Team 的自动处理策略不能成为所有 Team 的系统硬规则。
+
+---
+
+## 13. 自动下架属于 Team Workflow，但具体动作必须明确
+
+Risk Intelligence 只提供风险事实。
+
+真正的下架动作仍通过正式 Listing Business Operation 执行。
+
+对于 Walmart，至少需要区分：
+
+- Inventory Zero；
+- Retire / 停用；
+- Delete / 删除。
+
+三者业务语义不同。
+
+当前已经确认：
+
+> 当前 Team 在线风险命中后要自动下架。
+
+但当前 Team 最终采用哪一种 Walmart 下架动作：
+
+> **仍待单独确认。**
+
+在该规则明确以前，系统 / 开发不能自行把“自动下架”解释成 Delete、Retire 或 Inventory Zero。
 
 ---
 
@@ -394,8 +424,8 @@ Amazon Seller Blacklist 主要影响：
 12. 风险判断必须结合具体 Team。
 12. Audit 可以查询 Blacklist，但 Audit Reject 不自动写入 Blacklist。
 13. 当前团队上架前命中有效黑名单时，Workflow 直接 Reject。
-14. 在线商品命中新风险时，当前默认先产生运营待处理建议。
-15. 自动下架 / Exit 属于 Team Workflow，而不是 Risk Intelligence 固定动作。
+14. 在线商品命中新风险时，先形成 Risk Match；当前 Team 选择自动执行下架动作，其他 Team 自行配置提醒 / 人工 / 自动策略。
+15. 自动下架属于 Team Workflow，不是 Risk Intelligence 固定动作；Walmart 的具体下架方式（库存 0 / 停用 / 删除）必须明确，不能由系统自行猜测。
 16. Seller Blacklist 主要作用于 Source / Procurement Selection。
 17. Brand / Product Blacklist 主要作用于 Product Audit 与 Online Listing Risk。
 18. 系统运营方可以选择将 Team 风险记录提升到 System Public Blacklist。
