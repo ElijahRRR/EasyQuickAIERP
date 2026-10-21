@@ -1677,25 +1677,51 @@ ERP 可以定期或人工触发在线 Listing 风险扫描。
 
 > **自动下架是当前 Team 的策略，不是 ERP 对所有 Team 的全局强制行为。**
 
-### 13.9 当前 Team 的具体“下架动作”仍待确认
+### 13.9 当前 Team 风险自动下架使用“删除”
 
-“自动下架”在 Walmart 上不能作为一个模糊动作，因为至少存在：
+当前 Team 已确认：
+
+> **在线 Listing 扫描命中当前 Team 认定需要自动下架的风险后，Walmart 下架动作使用“删除”。**
+
+因此当前 Team 的风险处理流程为：
+
+~~~text
+Online Listing
+↓
+Risk Scan
+↓
+Effective Risk Match
+↓
+Current Team Policy 判断需要自动下架
+↓
+Delete Listing
+↓
+同步 / 回读 Walmart 实际结果
+~~~
+
+这里的“删除”与：
 
 - 库存设为 0；
 - 停用；
-- 删除。
 
-三者业务含义不同。
+不是同一个动作。
 
-当前已经确认：
+删除属于高风险平台操作，因此即使由 Workflow 自动执行，也必须继续遵守：
 
-> 当前 Team 要自动下架。
+- 当前 Team 已明确启用该自动化策略；
+- 执行身份具有 Delete Listing 权限；
+- 保留触发的风险证据；
+- 保留实际执行结果；
+- 不删除 ERP 内 Product / Listing / Order / Audit 等历史数据。
 
-但具体使用哪一种 Walmart 动作：
+其他 Team 不继承该规则，可以自行选择：
 
-> **仍待当前 Team 明确。**
-
-在这一点确认前，开发不能自行把“自动下架”解释成 Delete、Retire 或 Inventory Zero。
+- 只提醒；
+- 人工处理；
+- 库存设为 0；
+- 停用；
+- 删除；
+- 其他允许的 Workflow。
 
 ---
 
@@ -1711,7 +1737,7 @@ ERP 可以定期或人工触发在线 Listing 风险扫描。
 43. 在线 Listing 风险扫描本身只产生风险命中事实；后续动作由 Team Policy / Workflow 决定。
 44. 当前 Team 选择在线风险命中后自动执行下架，不只做人工提醒。
 45. 其他 Team 可以自行决定只提醒、人工处理或自动执行。
-46. 当前 Team 的具体 Walmart 下架方式（库存 0 / 停用 / 删除）仍待确认，开发不能自行假设。
+46. 当前 Team 风险自动下架的 Walmart 动作为“删除”；其他 Team 不继承该策略。
 
 ---
 
