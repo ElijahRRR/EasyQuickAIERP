@@ -1474,19 +1474,252 @@ Walmart Customer Refund：
 
 ---
 
-## 13. 下一批
+## 13. 结算、利润与风险相关业务动作
 
-下一批继续确认：
+### 13.1 同步 / 导入 Walmart 结算数据
 
-> **结算、利润、风险处理相关正式业务动作**
+ERP 可以从 Walmart 获取 Recon / Settlement 数据，并形成：
 
-重点包括：
+- Settlement Period；
+- Settlement Entry；
+- 当前累计已入账金额；
+- Store 级 Total Payable / Payout 观察。
 
-- 拉取 / 导入结算数据；
-- 当前预计利润与对账后利润；
-- 财务结果重新计算；
-- 店铺回款 / Payment Statement；
-- 商品 / 品牌 / Seller 风险查询；
-- 风险命中后的人工处理；
-- 黑名单 / 白名单维护；
-- 在线 Listing 风险扫描。
+这些来自 Walmart 的账单与回款事实：
+
+> **普通用户不能直接修改成另一个金额。**
+
+如果发现数据不对：
+
+- 可以重新同步；
+- 可以补充内部备注；
+- 可以修正 ERP 自己录入错误的内部成本；
+
+但不能人工篡改 Walmart 返回的 Settlement / Payout Platform Fact。
+
+---
+
+### 13.2 重新计算预计利润
+
+预计利润不是人工填写的数字。
+
+它由当前业务事实自动计算，例如：
+
+- Sales Amount；
+- 预计 / 实际采购成本；
+- 第三方物流费用；
+- Team Cost Policy；
+- 售后事实；
+- 其他已确认成本。
+
+如果利润看起来不对：
+
+> 应修正造成结果错误的业务事实或成本数据，再由 ERP 重新计算。
+
+普通运营不能直接把：
+
+~~~text
+Estimated Profit = 12.50
+~~~
+
+手工改成：
+
+~~~text
+Estimated Profit = 20.00
+~~~
+
+---
+
+### 13.3 重新计算当前对账利润
+
+Walmart Settlement 到达后：
+
+> ERP 根据当前累计 Settlement + 实际采购成本 + 物流成本等重新计算当前对账利润。
+
+Current Reconciled Profit 同样：
+
+> **不是人工可直接编辑的结果字段。**
+
+如果后续出现：
+
+- Refund；
+- Adjustment；
+- 新 Settlement Period；
+- Purchase Refund；
+- Logistics Cost 修正；
+
+ERP 根据新的真实事实继续重新计算。
+
+---
+
+### 13.4 人工登记 / 修正第三方物流费用
+
+EasyQuickAIERP V1 允许有权限人员人工登记第三方物流费用。
+
+例如：
+
+~~~text
+Order Line A
+Third-party Logistics Cost = 3.20
+~~~
+
+如果录入错误：
+
+> 允许修正，但必须保留修改历史。
+
+至少需要能够追踪：
+
+- 原金额；
+- 新金额；
+- 修改人；
+- 修改时间；
+- 修改原因（适用时）。
+
+物流费用变化后，相关 Estimated Profit / Current Reconciled Profit 自动重新计算。
+
+---
+
+### 13.5 修改成本系数 / 经营成本规则
+
+例如某 Store / 采购方的采购核算规则：
+
+~~~text
+实际采购金额 × 1.02
+~~~
+
+以后改为：
+
+~~~text
+实际采购金额 × 1.03
+~~~
+
+正式确认：
+
+> 新规则不能无痕重写过去已经发生业务所适用的旧规则。
+
+系统必须保留：
+
+- 规则内容；
+- 生效时间；
+- 失效时间 / 新版本生效时间；
+- 适用范围。
+
+历史采购 / 订单原则上继续按其业务发生时适用的成本规则解释。
+
+---
+
+### 13.6 查询风险结果
+
+ERP 可以针对：
+
+- Brand；
+- Product；
+- Amazon Seller；
+
+查询当前 Team 的有效风险结果。
+
+风险判断必须结合：
+
+- 当前 Team；
+- System Public Blacklist；
+- Team Private Blacklist；
+- Team Whitelist；
+- 不可覆盖硬规则。
+
+---
+
+### 13.7 维护 Team 黑名单 / 白名单
+
+有权限人员可以：
+
+- 添加 Team Private Blacklist；
+- 移除 / 停用 Team Private Blacklist；
+- 添加 Team Whitelist；
+- 移除 / 停用 Team Whitelist。
+
+这些操作必须保留历史和 Actor。
+
+Whitelist 仍然不能覆盖：
+
+- 已确认 TRO；
+- 目标平台明确禁售 / 禁止销售等硬规则。
+
+---
+
+### 13.8 扫描在线 Listing 风险
+
+ERP 可以定期或人工触发在线 Listing 风险扫描。
+
+扫描结果首先形成：
+
+> 当前风险事实 / 命中结果。
+
+之后执行什么动作：
+
+> 由 Team Risk Policy / Workflow 决定。
+
+#### 当前 Team
+
+当前 Team 明确采用：
+
+> **在线商品扫描命中需要下架的风险后，自动执行下架动作，而不是只提醒人工。**
+
+#### 其他 Team
+
+其他 Team 可以自行配置：
+
+- 只告警；
+- 人工审核后处理；
+- 自动下架；
+- 其他后续 Workflow。
+
+因此：
+
+> **自动下架是当前 Team 的策略，不是 ERP 对所有 Team 的全局强制行为。**
+
+### 13.9 当前 Team 的具体“下架动作”仍待确认
+
+“自动下架”在 Walmart 上不能作为一个模糊动作，因为至少存在：
+
+- 库存设为 0；
+- 停用；
+- 删除。
+
+三者业务含义不同。
+
+当前已经确认：
+
+> 当前 Team 要自动下架。
+
+但具体使用哪一种 Walmart 动作：
+
+> **仍待当前 Team 明确。**
+
+在这一点确认前，开发不能自行把“自动下架”解释成 Delete、Retire 或 Inventory Zero。
+
+---
+
+## 14. 财务 / 风险已确认原则
+
+36. Estimated Profit 和 Current Reconciled Profit 都是计算结果，普通用户不能直接手工改数字。
+37. 利润不正确时，应修正采购成本、物流费用、Settlement 等原始业务事实，再重新计算。
+38. Walmart Settlement / Payout 属于平台财务事实，普通用户不能直接修改。
+39. V1 支持人工登记和修正第三方物流费用，修正必须保留历史。
+40. Cost Coefficient / Cost Policy 修改必须有生效历史，不能无痕改写过去业务使用的旧规则。
+41. 风险查询必须带 Team Context。
+42. Team Private Blacklist / Whitelist 的增删改需要正式操作与历史。
+43. 在线 Listing 风险扫描本身只产生风险命中事实；后续动作由 Team Policy / Workflow 决定。
+44. 当前 Team 选择在线风险命中后自动执行下架，不只做人工提醒。
+45. 其他 Team 可以自行决定只提醒、人工处理或自动执行。
+46. 当前 Team 的具体 Walmart 下架方式（库存 0 / 停用 / 删除）仍待确认，开发不能自行假设。
+
+---
+
+## 15. 下一步
+
+Business Operation Catalog 已覆盖主要经营域。
+
+当前还需要补齐两件事：
+
+1. 确认当前 Team 的风险自动下架具体使用哪一种 Walmart 动作；
+2. 做一次完整收口审查，确认是否还有遗漏的正式业务动作，再决定是否把本清单标记为 Baseline。
