@@ -43,7 +43,7 @@ EasyQuickAIERP 是一个面向多团队、多销售平台、多商品来源的�
 - [业务对象关系与开发交接约束图 v0.1](./docs/01-foundation/06-business-object-relations-handoff-constraints.md)
 - [Data Retention Policy v0.1](./docs/01-foundation/07-data-retention-policy.md)
 - [Walmart Platform Capability Specification v0.2](./docs/01-foundation/08-walmart-platform-capability-spec.md)
-- [正式业务动作清单 v0.1](./docs/01-foundation/09-business-operation-catalog.md)
+- [正式业务动作清单 Baseline v1.0](./docs/01-foundation/09-business-operation-catalog.md)
 
 ## 文档原则
 
@@ -59,6 +59,6 @@ EasyQuickAIERP 是一个面向多团队、多销售平台、多商品来源的�
 
 继续阶段 1：
 
-> **PostgreSQL Schema 设计 + Business Operation Catalog 并行推进**
+> **PostgreSQL Schema 对照审查 / 开发交接检查**
 
-开发人员继续输出第一版 Logical / Physical Schema；同时业务侧继续确认正式业务动作，让后续人工操作、Workflow、AI 和 Open API 共用同一套业务能力。
+Business Operation Catalog 已收口。开发人员继续完成第一版 Logical / Physical Schema；业务侧进入结构审查，重点检查数据库设计是否违反已确认的对象关系、历史保留、平台事实与 ERP 决策边界。
