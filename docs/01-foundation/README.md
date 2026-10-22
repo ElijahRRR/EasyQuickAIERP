@@ -23,9 +23,9 @@
 | [Foundation Architecture](./01-foundation-architecture.md) | v0.2 | Tenant、Internal ID、Domain Ownership、Platform Adapter、Business Operation、Authorization、Audit、Async Job |
 | [业务模块与数据归属图](./02-domain-data-ownership.md) | v0.2 | Store、商品、Listing、订单、采购、物流、售后、财务的数据 Owner 与跨模块协作边界 |
 | [核心对象业务信息需求（第一批）](./03-core-object-business-information-1.md) | v0.3 | Store、Product、Product Source、Listing 的业务信息、历史保留与数据设计分工 |
-| [核心对象业务信息需求（第二批）](./04-core-object-business-information-2.md) | v0.3 | Sales Order、Order Line、Order Audit、Procurement Task、Purchase 的业务信息与历史快照 |
+| [核心对象业务信息需求（第二批）](./04-core-object-business-information-2.md) | v0.4 | Sales Order、Order Line、Order Audit、Procurement Task、Purchase 的业务信息与历史快照；同需求重购与新增需求分开 |
 | [核心对象业务信息需求（第三批）](./05-core-object-business-information-3.md) | v0.1 | Platform Shipment、Tracking、Return、Refund、Settlement Entry、Settlement Period / Payout 的业务信息与历史保留 |
-| [业务对象关系与开发交接约束图](./06-business-object-relations-handoff-constraints.md) | v0.1 | 核心对象基数、可空关系、历史保留、禁止级联删除、Job/权限、Platform Fact 与 ERP Decision 开发约束 |
+| [业务对象关系与开发交接约束图](./06-business-object-relations-handoff-constraints.md) | v0.2 | 核心对象基数、可空关系、历史保留、禁止级联删除、Job/权限、Platform Fact 与 ERP Decision 开发约束；采购任务边界澄清 |
 | [Data Retention Policy](./07-data-retention-policy.md) | v0.1 | 不同数据类型的默认保留期限、Hot/Archive/Purge 边界与可配置策略 |
 | [Walmart Platform Capability Specification](./08-walmart-platform-capability-spec.md) | Baseline v0.2 | Store Connection、Platform Resource、Listing/Feed、Price/Inventory、Shipping、Orders/Returns、Settlement/Reports、Performance、Store State 等 Walmart 能力 |
 | [正式业务动作清单](./09-business-operation-catalog.md) | Baseline v1.0 | 用业务语言定义 UI / Workflow / AI / Open API 共用的正式业务动作；已确认 Store、Product、Listing、订单/采购、Walmart 发货与售后、财务与风险动作 |
@@ -67,13 +67,18 @@ System Sync ≠ User Delegation
 
 用户委托 / Digital Employee 的后台任务在真正产生业务副作用时重新校验当前权限；系统同步身份只在受限范围内维护 Platform Fact。
 
-## 4. 下一步
+## 4. 开发与产品并行推进
 
-> **PostgreSQL Schema 对照审查 / 开发交接检查**
+> **开发继续 PostgreSQL Schema；产品并行完成 V1 范围、分期与验收规划。**
 
 Business Operation Catalog 已收口为 Baseline v1.0。
 
-下一步业务侧不再重复梳理动作，而是检查开发人员输出的 PostgreSQL Logical / Physical Schema 是否完整承载阶段 0 与阶段 1 已确认的业务边界。
+开发人员继续输出 PostgreSQL Logical / Physical Schema，具备可审查版本后再检查其是否完整承载阶段 0 与阶段 1 已确认的业务边界。产品侧不等待 schema 定稿，也不重复设计表，当前交付为：
+
+- [V1 功能范围与优先级 v0.1](../product-planning/01-v1-scope-and-priorities.md)；
+- [V1 交付与验收门槛 v0.1](../product-planning/02-v1-delivery-and-acceptance.md)。
+
+两份文档中的新分期为待确认提案，已确认业务基线继续有效。确认后再细化页面菜单、页面动作、权限矩阵、完整验收用例和当前 Team Workflow Template。
 
 业务侧不逐字段决定数据库实现；后续评审重点检查：
 
@@ -84,3 +89,4 @@ Business Operation Catalog 已收口为 Baseline v1.0。
 - 是否把 Current Value 与 Historical Fact 混为一体；
 - 是否把 Platform Fact 与 ERP Decision 混为一个状态；
 - 是否满足 Tenant、Authorization、Audit、Job 等 Foundation 边界。
+

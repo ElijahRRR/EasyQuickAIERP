@@ -1,8 +1,8 @@
-# 阶段 0 收口审查 — Business Model Closure Review v1.1
+# 阶段 0 收口审查 — Business Model Closure Review v1.2
 
 > 状态：已收口（Baseline v1）  
 > 初次收口：2026-10-01  
-> 最近修订：2026-10-07  
+> 最近修订：2026-10-22（同步后续已确认的当前 Team 风险 Delete 策略）  
 > 范围：`docs/00-business-modeling`
 
 ## 1. 收口目标
@@ -319,7 +319,9 @@ Audit 可以查询 Blacklist，但：
 
 > Audit Reject 不自动创建 Blacklist Entry。
 
-在线商品命中新风险后，当前团队默认先产生运营建议；自动下架属于 Team Workflow。
+在线商品命中新风险后，先形成 Risk Match / Effective Risk Result。当前 Team 已确认：对其策略认定需要下架的风险，自动执行 **Walmart Delete Listing**，不只产生运营建议，也不以 Inventory Zero 或 Retire 替代。
+
+该自动动作属于当前 Team 已启用的 Risk Policy / Workflow，须有执行身份、Delete 权限、风险证据、操作历史和平台结果核实；不删除 ERP Product、Listing、订单等历史。其他 Team 自行定义提醒、人工或自动处置，不继承当前 Team 策略。详见 [Risk Intelligence v0.4](./11-risk-intelligence-blacklist.md) 第 12–13 节及[正式业务动作清单 v1.0](../01-foundation/09-business-operation-catalog.md) 第 13.8–13.9 节。
 
 ### 3.11 阶段 1 前置细化不改变阶段 0 业务本质
 
@@ -470,3 +472,4 @@ Closed 不表示以后永远不能改。
 - 为后续 Workflow / AI 保留统一调用接口。
 
 具体技术方案需要重新讨论和确认，不能因为阶段 0 的业务概念而直接推导数据库表结构。
+

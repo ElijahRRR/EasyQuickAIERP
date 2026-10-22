@@ -1,9 +1,11 @@
-# 业务对象关系与开发交接约束图 v0.1
+# 业务对象关系与开发交接约束图 v0.2
 
 > 状态：已确认  
 > 所属阶段：阶段 1 — ERP 地基  
 > 目标：把已经确认的业务模型转换为开发人员设计 PostgreSQL Schema 时不可违反的逻辑关系与数据约束。  
 > 注意：本文不是数据库 DDL，不规定具体表名、字段名、数据类型、索引算法或 ORM 实现。
+
+> 最近修订：2026-10-22；第 13 节同步动作清单 v1.0 的采购需求 / 重购边界，不改变物理设计分工。
 
 ## 1. 关系表示
 
@@ -355,9 +357,11 @@ Order Line 1 → 0..N Procurement Task
 - Initial Fulfillment；
 - Lost Replacement；
 - After-sales Replacement；
-- 其他重新采购。
+- 其他新增的独立采购需求。
 
-补发 / 丢件重购需要新的 Procurement Task，不能继续修改已完成的原采购任务。
+新增补发 / 丢件替换需求需要新的 Procurement Task，不能继续修改已完成的原采购任务。
+
+原采购需求未变、只是某次 Purchase 取消或失败后的重新采购，仍归原 Procurement Task，并新增 Purchase。不能按每次重购新建任务；相关规则见[正式业务动作清单](./09-business-operation-catalog.md)第 9.4 节。
 
 ---
 
@@ -801,3 +805,4 @@ Platform Fact ≠ ERP Decision
 - 本文业务对象关系与开发交接约束；
 
 输出第一版 PostgreSQL Logical / Physical Schema，再进行业务一致性评审。
+

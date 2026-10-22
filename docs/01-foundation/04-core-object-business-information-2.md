@@ -1,8 +1,10 @@
-# 核心对象业务信息需求（第二批）v0.3
+# 核心对象业务信息需求（第二批）v0.4
 
 > 状态：已确认  
 > 所属阶段：阶段 1 — ERP 地基  
 > 说明：本文只确认 Sales Order、Order Line、Procurement Task、Purchase 在业务上必须保存什么，以及历史数据如何保留。数据库表结构和字段实现由开发人员负责。
+
+> 最近修订：2026-10-22；按正式业务动作清单 v1.0 澄清同一需求重购与新增补发需求的任务边界。
 
 ## 1. Sales Order（销售订单）
 
@@ -239,13 +241,15 @@ Purchase B = 2
 
 ---
 
-## 5. 补发 / 再采购创建新的 Procurement Task
+## 5. 新增补发需求与原需求失败后的重购分开
 
 当前确认：
 
-> 因 Lost、Replacement、After-sales 等原因需要再次采购时，创建新的 Procurement Task。
+> 因 Lost、Replacement、After-sales 等产生新的独立补发 / 补购需求时，创建新的 Procurement Task。
 
-不继续修改已经完成的原采购任务。
+新的独立需求不继续修改已经完成的原采购任务。
+
+如果只是原需求未变、某次 Purchase 被 Seller 取消或失败后重新购买，则沿用原 Procurement Task，新增独立 Purchase；取消数量重新计入未覆盖数量，不自动再次下单。不能把所有“再采购”都理解成必须新建任务。详见[正式业务动作清单](./09-business-operation-catalog.md)第 9.2–9.4 节。
 
 例如：
 
@@ -497,7 +501,7 @@ Order Line
 6. 每次 Order Audit 必须绑定当时实际使用的 Team Order Audit Policy / Rule Version。
 7. Seller Blacklist 判断针对当次实际候选 / 选中的 Seller，而不是把 Seller 固化为 ASIN 身份。
 8. 同一 Order Line 的所有 Audit / Recheck 历史全部保留。
-9. Replacement / Lost 等再采购建立新的 Procurement Task。
+9. Replacement / Lost 等新增独立采购需求建立新任务；同一需求下原 Purchase 失败后的重购沿用原任务并新增 Purchase。
 10. Procurement Task 与 Purchase 是不同对象。
 11. ERP Purchase 保持 Procurement Task / Order Line 粒度；多个 Purchase 可以共享同一个外部 Source Order ID。
 12. Purchase 保存真实交易金额：商品金额、Tax、Shipping、Actual Paid。
@@ -520,3 +524,4 @@ Order Line
 - Settlement Period / Payout。
 
 仍然只确认业务信息需求与历史保留原则，不设计数据库物理字段。
+

@@ -1,7 +1,9 @@
-# 物流生命周期业务模型 v0.4
+# 物流生命周期业务模型 v0.5
 
 > 状态：已确认  
 > 所属阶段：ERP 阶段 0 — 业务建模
+
+> 最近修订：2026-10-22；澄清第 38 节通用多包裹模型与 Walmart US 待验证写能力，未新增平台能力承诺。
 
 ## 1. 物流业务的核心定位
 
@@ -995,7 +997,7 @@ ERP 最重要的责任是：
 
 EasyQuickAIERP V1 必须支持有权限人员人工向 Walmart 提交发货信息。
 
-一条 Order Line 可以拆分为多个 Shipment / Tracking，并分别记录各自承担的发货数量。
+ERP 通用模型允许一条 Order Line 关联多个 Shipment / Tracking，并分别记录各自承担的发货数量。下面是通用模型示例，不代表 Walmart US 已确认支持同一 Order Line 多包裹写入；美国站限制以第 39.4 节为准。
 
 例如：
 
@@ -1005,7 +1007,7 @@ Order Line Qty 3
 └ Package B → Qty 2 → Tracking B
 ~~~
 
-因此 ERP 不能把“一条 Order Line 只能有一个 Tracking”写成系统限制。
+因此 ERP 通用模型不能把“一条 Order Line 只能有一个 Tracking”写成系统限制。Walmart US 写入口只开放已验证的平台能力，不能因通用模型允许就提前开放多包裹写入。
 
 同时：
 
@@ -1072,3 +1074,4 @@ ERP 通用模型允许一个 Order Line 关联多个 Shipment / Tracking。
 30. Walmart Carrier / Tracking 更正必须保留旧值历史。
 31. Walmart 发货请求失败不能把平台事实标记为 Shipped。
 32. ERP 通用模型支持 0..N Shipment / Tracking；Walmart US 多包裹写入能力待实测确认。
+
