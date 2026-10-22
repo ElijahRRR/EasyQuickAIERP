@@ -1,6 +1,6 @@
-# 正式业务动作清单 v0.1
+# 正式业务动作清单 v1.0
 
-> 状态：进行中；第一批已确认  
+> 状态：已确认（Baseline v1.0）  
 > 所属阶段：阶段 1 — ERP 地基  
 > 目标：用业务语言明确 EasyQuickAIERP 允许执行哪些正式业务动作。人工操作、Workflow、AI、Open API、定时任务最终都应复用这些动作，而不是各自实现一套业务逻辑。
 
@@ -2094,28 +2094,70 @@ Team 普通成员不能因为有 Team Private Blacklist 权限，就自动获得
 
 ---
 
-## 17. 当前仅剩的收口检查点
+## 17. 单条操作与批量入口通用原则
 
-目前没有发现新的核心业务域缺失。
+正式确认：
 
-在把 Business Operation Catalog 标记为 Baseline 前，还需要最后确认：
-
-> **这份清单是否应该把“所有正式业务动作默认都支持单条操作，同时对适合批量处理的动作提供批量入口”作为 ERP 通用原则。**
+> **所有正式业务动作都以“单个目标上的正式业务动作”为业务语义基础；适合批量处理的动作可以提供批量入口，但不建立第二套批量业务逻辑。**
 
 例如：
 
-- 批量商品审核；
-- 批量店铺分配；
-- 批量 Listing Submit；
-- 批量改价；
-- 批量库存；
-- 批量 Delete；
-- 批量风险扫描。
+- 商品审核；
+- 店铺分配；
+- Listing Submit；
+- Price Update；
+- Inventory Update；
+- Retire / Delete；
+- 风险扫描。
 
-批量入口只是在一次操作中选择多个目标：
+批量入口可以一次选择多个目标，但每个目标仍然分别执行同一个正式业务动作，并分别完成：
 
-> 不建立第二套“批量业务逻辑”。
+- Permission Check；
+- Business Validation；
+- Platform Capability Check（如涉及外部平台）；
+- Audit；
+- Execution Result；
+- Error / Partial Success Handling。
 
-每一个目标仍然按照同一个正式业务动作、权限、校验、审计和结果处理。
+因此：
 
-如果确认这一点，Business Operation Catalog 就可以进入最终 Baseline 收口。
+~~~text
+Batch Entry
+≠
+Separate Business Logic
+~~~
+
+批量处理中允许：
+
+~~~text
+Item A → Success
+Item B → Failed
+Item C → Success
+~~~
+
+不能因为单个对象失败，就自动把其他已经成功对象伪造成失败；是否存在事务级整体回滚，只能由具体业务能力明确要求，不能作为 ERP 全局默认。
+
+---
+
+## 18. Business Operation Catalog 收口结论
+
+经过 Store、Product、Listing、Order、Procurement、Logistics、After-sales、Finance、Risk、Organization / Permission、Walmart Platform Resource 等业务域对照审查：
+
+> **当前没有发现阻塞阶段 1 的核心正式业务动作缺失。**
+
+本清单正式标记为：
+
+> **Business Operation Catalog Baseline v1.0**
+
+Baseline v1.0 的含义是：
+
+- 当前开发可以以本清单作为正式业务动作来源；
+- UI、Workflow、AI、Open API、Scheduled Trigger 应复用同一正式业务动作；
+- 后续新增真实业务需求时继续版本化演进；
+- Baseline 不代表未来永远不能增加动作。
+
+下一步业务侧进入：
+
+> **阶段 1 开发交接审查 / PostgreSQL Schema 对照审查**
+
+重点不再重新讨论业务动作，而是检查开发设计是否违反已经确认的业务边界。
